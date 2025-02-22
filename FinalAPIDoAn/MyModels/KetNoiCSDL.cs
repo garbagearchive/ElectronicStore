@@ -25,6 +25,10 @@ public partial class KetNoiCSDL : DbContext
 
     public virtual DbSet<Product> Products { get; set; }
 
+    public virtual DbSet<ProductRepair> ProductRepairs { get; set; }
+
+    public virtual DbSet<ProductReview> ProductReviews { get; set; }
+
     public virtual DbSet<Shipping> Shippings { get; set; }
 
     public virtual DbSet<ShoppingCart> ShoppingCarts { get; set; }
@@ -76,6 +80,29 @@ public partial class KetNoiCSDL : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products).HasConstraintName("FK__Products__Catego__403A8C7D");
+        });
+
+        modelBuilder.Entity<ProductRepair>(entity =>
+        {
+            entity.HasKey(e => e.RepairId).HasName("PK__ProductR__07D0BDCD7FF15A20");
+
+            entity.Property(e => e.RepairRequestDate).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.RepairStatus).HasDefaultValue("Pending");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ProductRepairs).HasConstraintName("FK__ProductRe__Produ__778AC167");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ProductRepairs).HasConstraintName("FK__ProductRe__UserI__787EE5A0");
+        });
+
+        modelBuilder.Entity<ProductReview>(entity =>
+        {
+            entity.HasKey(e => e.ReviewId).HasName("PK__ProductR__74BC79AE532DE49A");
+
+            entity.Property(e => e.ReviewDate).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ProductReviews).HasConstraintName("FK__ProductRe__Produ__71D1E811");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ProductReviews).HasConstraintName("FK__ProductRe__UserI__72C60C4A");
         });
 
         modelBuilder.Entity<Shipping>(entity =>
