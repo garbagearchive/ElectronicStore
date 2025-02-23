@@ -99,5 +99,3 @@ namespace FinalAPIDoAn.Controllers
     }
     }
 
-//testing git
-

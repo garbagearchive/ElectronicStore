@@ -6,11 +6,13 @@ namespace FinalAPIDoAn.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-        public class ProductController : ControllerBase
+    public class ProductController : ControllerBase
+    {
+        public class OrderController : ControllerBase
         {
             private readonly KetNoiCSDL _dbc;
 
-            public ProductController(KetNoiCSDL dbc)
+            public OrderController(KetNoiCSDL dbc)
             {
                 _dbc = dbc;
             }
@@ -38,7 +40,7 @@ namespace FinalAPIDoAn.Controllers
                 return Ok(new { data = results });
             }
 
-            [HttpPost("Add")]
+            [HttpPut("Add")]
             public IActionResult AddProduct([FromBody] ProductDto productDto)
             {
                 if (string.IsNullOrWhiteSpace(productDto.ProductName) || productDto.Price <= 0 || productDto.StockQuantity <= 0 || productDto.CategoryID <= 0)
@@ -90,17 +92,15 @@ namespace FinalAPIDoAn.Controllers
                 return Ok(new { message = "Product deleted successfully." });
             }
         }
+    }
     public class ProductDto
     {
-        public required int ProductID { get; set; }
+        public required int ProductID {get;set;}
         public required string ProductName { get; set; }
         public required string Description { get; set; }
         public required int Price { get; set; }
         public required int StockQuantity { get; set; }
         public required int CategoryID { get; set; }
         public required string ImageURL { get; set; }
-    }
-
 }
-
-
+}
