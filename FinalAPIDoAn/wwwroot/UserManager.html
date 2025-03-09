@@ -3,94 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Người Dùng</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Quản Lý Người Dùng</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body>
-    <div class="container mt-4">
-        <h2 class="text-center">Quản lý Người Dùng</h2>
-        <div class="mb-3">
-            <input type="text" id="searchKeyword" class="form-control" placeholder="Tìm kiếm theo tên">
-            <button class="btn btn-primary mt-2" onclick="searchUser()">Tìm kiếm</button>
+<body class="container mt-4">
+    <h2 class="text-center">Quản Lý Người Dùng</h2>
+
+    <div class="mb-3">
+        <input type="text" id="searchKeyword" class="form-control" placeholder="Nhập tên để tìm kiếm">
+        <button class="btn btn-primary mt-2" onclick="searchUser()"><i class="fas fa-search"></i> Tìm kiếm</button>
+        <button class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#userModal" onclick="clearForm()">
+            <i class="fas fa-user-plus"></i> Thêm User
+        </button>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên Đăng Nhập</th>
+                <th>Họ Tên</th>
+                <th>Email</th>
+                <th>Điện Thoại</th>
+                <th>Địa Chỉ</th>
+                <th>Vai Trò</th>
+                <th>Hành Động</th>
+            </tr>
+        </thead>
+        <tbody id="userTable">
+            <tr><td colspan="8" class="text-center">Đang tải...</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Modal Thêm/Sửa User -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="userModalLabel" class="modal-title">Thêm User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="userId">
+                    <div class="mb-2">
+                        <label>Tên Đăng Nhập:</label>
+                        <input type="text" id="username" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label>Mật Khẩu:</label>
+                        <input type="password" id="password" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label>Họ Tên:</label>
+                        <input type="text" id="fullName" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label>Email:</label>
+                        <input type="email" id="email" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label>Điện Thoại:</label>
+                        <input type="text" id="phone" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label>Địa Chỉ:</label>
+                        <input type="text" id="address" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label>Vai Trò:</label>
+                        <select id="role" class="form-control">
+                            <option value="Buyer">Buyer</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button id="saveUserBtn" type="button" class="btn btn-primary" onclick="saveUser()">Lưu</button>
+                </div>
+            </div>
         </div>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên Người Dùng</th>
-                    <th>Email</th>
-                    <th>Điện thoại</th>
-                    <th>Vai trò</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody id="userTableBody">
-                <!-- Dữ liệu sẽ được thêm vào đây -->
-            </tbody>
-        </table>
     </div>
 
     <script>
+        const apiBaseUrl = "https://localhost:7252/api/user";
+
         function loadUsers() {
-            $.get("https://localhost:7252/api/User/List", function(response) {
-                let users = response.data;
-                let tableBody = "";
-                users.forEach(user => {
-                    tableBody += `<tr>
-                        <td>${user.userId}</td>
-                        <td>${user.fullName}</td>
-                        <td>${user.email}</td>
-                        <td>${user.phone}</td>
-                        <td>${user.role}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm">Sửa</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.userId})">Xóa</button>
-                        </td>
-                    </tr>`;
-                });
-                $("#userTableBody").html(tableBody);
-            });
+            $("#userTable").html('<tr><td colspan="8" class="text-center">Đang tải...</td></tr>');
+
+            $.get(`${apiBaseUrl}/List`, function (response) {
+                let rows = response.data.map(user => `
+                        <tr>
+                            <td>${user.userId}</td>
+                            <td>${user.username}</td>
+                            <td>${user.fullName}</td>
+                            <td>${user.email}</td>
+                            <td>${user.phone}</td>
+                            <td>${user.address}</td>
+                            <td>${user.role}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="openEditModal(${user.userId})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.userId})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                $("#userTable").html(rows);
+            }).fail(() => alert("Không thể tải danh sách người dùng."));
         }
 
-        function searchUser() {
-            let keyword = $("#searchKeyword").val();
-            $.get(`http://localhost:7252/api/User/Search?keyword=${keyword}`, function(response) {
-                let users = response.data;
-                let tableBody = "";
-                users.forEach(user => {
-                    tableBody += `<tr>
-                        <td>${user.userId}</td>
-                        <td>${user.fullName}</td>
-                        <td>${user.email}</td>
-                        <td>${user.phone}</td>
-                        <td>${user.role}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm">Sửa</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.userId})">Xóa</button>
-                        </td>
-                    </tr>`;
-                });
-                $("#userTableBody").html(tableBody);
-            });
+        function clearForm() {
+            $("#userId").val("");
+            $("#username").val("");
+            $("#fullName").val("");
+            $("#email").val("");
+            $("#phone").val("");
+            $("#address").val("");
+            $("#role").val("Buyer");
+            $("#password").val("");
+            $("#userModalLabel").text("Thêm User");
         }
 
-        function deleteUser(userId) {
-            if (confirm("Bạn có chắc muốn xóa người dùng này?")) {
-                $.ajax({
-                    url: `http://localhost:7252/api/User/Delete?userid=${userId}`,
-                    type: 'DELETE',
-                    success: function(response) {
-                        alert(response.message);
-                        loadUsers();
-                    }
-                });
+        function saveUser() {
+            let userId = $("#userId").val().trim();
+            if (userId === "") {
+                addUser();
+            } else {
+                updateUser(userId);
             }
         }
 
-        $(document).ready(function() {
-            loadUsers();
-        });
+        function addUser() {
+            let user = {
+                username: $("#username").val().trim(),
+                fullName: $("#fullName").val().trim(),
+                email: $("#email").val().trim(),
+                phone: $("#phone").val().trim(),
+                address: $("#address").val().trim(),
+                role: $("#role").val(),
+                password: $("#password").val().trim()
+            };
+
+            $.post(`${apiBaseUrl}/Add`, JSON.stringify(user), function () {
+                alert("Thêm người dùng thành công!");
+                $("#userModal").modal("hide");
+                loadUsers();
+            }).fail(() => alert("Thêm thất bại!"));
+        }
+
+        function updateUser(userId) {
+            let user = {
+                userId,
+                username: $("#username").val().trim(),
+                fullName: $("#fullName").val().trim(),
+                email: $("#email").val().trim(),
+                phone: $("#phone").val().trim(),
+                address: $("#address").val().trim(),
+                role: $("#role").val()
+            };
+
+            $.ajax({
+                url: `${apiBaseUrl}/Update/${userId}`,
+                method: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(user)
+            }).done(() => {
+                alert("Cập nhật thành công!");
+                $("#userModal").modal("hide");
+                loadUsers();
+            }).fail(() => alert("Cập nhật thất bại!"));
+        }
+
+        function deleteUser(userId) {
+            if (confirm("Bạn có chắc chắn muốn xóa?")) {
+                $.ajax({ url: `${apiBaseUrl}/Delete/${userId}`, method: "DELETE" }).done(loadUsers);
+            }
+        }
+
+        $(document).ready(loadUsers);
     </script>
 </body>
 </html>

@@ -44,7 +44,7 @@ namespace FinalAPIDoAn.Controllers
 
             var user = new User
             {
-                UserName = userDto.UserName,
+                Username = userDto.Username,
                 PasswordHash = userDto.PasswordHash,
                 FullName = userDto.FullName,
                 Email = userDto.Email,
@@ -69,7 +69,7 @@ namespace FinalAPIDoAn.Controllers
             if (user == null)
                 return NotFound(new { message = "User not found." });
 
-            user.UserName = userDto.UserName;
+            user.Username = userDto.Username;
             user.PasswordHash = userDto.PasswordHash;
             user.FullName = userDto.FullName;
             user.Email = userDto.Email;
@@ -100,22 +100,22 @@ namespace FinalAPIDoAn.Controllers
     public class UserDto
     {
         [Required]
-        public string UserName { get; set; }
+        public required string Username { get; set; }
 
         [Required]
-        public string PasswordHash { get; set; }
+        public required string PasswordHash { get; set; }
 
         [Required]
-        public string FullName { get; set; }
+        public required string FullName { get; set; }
 
         [Required]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [Required]
-        public string Phone { get; set; }
+        public required string Phone { get; set; }
 
         [Required]
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         public string? Role { get; set; }
     }
