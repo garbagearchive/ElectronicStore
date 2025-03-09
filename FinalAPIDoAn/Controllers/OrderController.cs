@@ -1,41 +1,44 @@
 ﻿using FinalAPIDoAn.MyModels;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
+using System.ComponentModel.DataAnnotations;
 
 namespace FinalAPIDoAn.Controllers
 {
-    
-        [Route("api/orders")]
-        [ApiController]
-        public class OrderController : ControllerBase
-        {
-            private readonly KetNoiCSDL _dbc;
+    [Route("api/orders")]
+    [ApiController]
+    public class OrderController : ControllerBase
+    {
+        private readonly KetNoiCSDL _dbc;
 
-            public OrderController(KetNoiCSDL dbc)
-            {
-                _dbc = dbc;
-            }
-        [HttpGet("List")]
-        public IActionResult GetAllOrder()
+        public OrderController(KetNoiCSDL dbc)
         {
-            var order = _dbc.Orders.ToList();
-            return Ok(new { data = order });
+            _dbc = dbc;
         }
-        [HttpGet("Search")]
+
+        [HttpGet("List")]
+        public IActionResult GetAllOrders()
+        {
+            var orders = _dbc.Orders.ToList();
+            return Ok(new { data = orders });
+        }
+
+        [HttpGet("Search/{id}")]
         public IActionResult GetOrderById(int id)
         {
             var order = _dbc.Orders.SingleOrDefault(o => o.OrderId == id);
-            if (order == null) return NotFound(new { message = "Order not found." });
-
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found." });
+            }
             return Ok(new { data = order });
         }
+
         [HttpPost("Add")]
         public IActionResult AddOrder([FromBody] OrderDto orderDto)
         {
-            if (orderDto == null || orderDto.UserID <= 0 || orderDto.TotalAmount <= 0)
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Invalid order data." });
+                return BadRequest(ModelState);
             }
 
             var order = new Order
@@ -53,49 +56,63 @@ namespace FinalAPIDoAn.Controllers
 
             return CreatedAtAction(nameof(GetOrderById), new { id = order.OrderId }, order);
         }
-        [HttpPut("Update")]
-        public IActionResult UpdateOrder([FromBody] OrderDto orderDto)
+
+        [HttpPut("Update/{id}")]
+        public IActionResult UpdateOrder(int id, [FromBody] OrderDto orderDto)
         {
-            if (orderDto == null || orderDto.UserID <= 0 || orderDto.TotalAmount <= 0)
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Invalid order data." });
+                return BadRequest(ModelState);
             }
 
-            var order = new Order
+            var order = _dbc.Orders.FirstOrDefault(o => o.OrderId == id);
+            if (order == null)
             {
-                UserId = orderDto.UserID,
-                OrderDate = orderDto.OrderDate == default ? DateTime.UtcNow : orderDto.OrderDate,
-                TotalAmount = orderDto.TotalAmount,
-                OrderStatus = orderDto.OrderStatus ?? "Pending",
-                PaymentStatus = orderDto.PaymentStatus ?? "Unpaid",
-                ShippingStatus = orderDto.ShippingStatus ?? "Not Shipped"
-            };
+                return NotFound(new { message = "Order not found." });
+            }
 
-            _dbc.Orders.Add(order);
+            order.UserId = orderDto.UserID;
+            order.OrderDate = orderDto.OrderDate == default ? DateTime.UtcNow : orderDto.OrderDate;
+            order.TotalAmount = orderDto.TotalAmount;
+            order.OrderStatus = orderDto.OrderStatus ?? "Pending";
+            order.PaymentStatus = orderDto.PaymentStatus ?? "Unpaid";
+            order.ShippingStatus = orderDto.ShippingStatus ?? "Not Shipped";
+
+            _dbc.Orders.Update(order);
             _dbc.SaveChanges();
 
-            return CreatedAtAction(nameof(GetOrderById), new { id = order.OrderId }, order);
+            return Ok(new { data = order });
         }
-        [HttpDelete("Delete")]
-        public IActionResult DeleteOrder(int orderid)
+
+        [HttpDelete("Delete/{id}")]
+        public IActionResult DeleteOrder(int id)
         {
-            var order = _dbc.Orders.SingleOrDefault(o => o.OrderId == orderid);
-            if (order == null) return NotFound(new { message = "Order not found." });
+            var order = _dbc.Orders.FirstOrDefault(o => o.OrderId == id);
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found." });
+            }
+
             _dbc.Orders.Remove(order);
             _dbc.SaveChanges();
-
             return Ok(new { message = "Order deleted successfully." });
         }
     }
+
     public class OrderDto
     {
-        public required int OrderID { get; set; }
-        public required int UserID { get; set; }
-        public required DateTime OrderDate { get; set; }
-        public required int TotalAmount { get; set; }
-        public required string OrderStatus { get; set; }
-        public required string PaymentStatus { get; set; }
-        public required string ShippingStatus { get; set; }
-    }
-    }
+        [Required]
+        public int UserID { get; set; }
 
+        [Required]
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Total amount must be greater than 0.")]
+        public decimal TotalAmount { get; set; }
+
+        public string OrderStatus { get; set; } = "Pending";
+        public string PaymentStatus { get; set; } = "Unpaid";
+        public string ShippingStatus { get; set; } = "Not Shipped";
+    }
+}

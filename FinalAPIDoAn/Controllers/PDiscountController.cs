@@ -1,10 +1,10 @@
 ﻿using FinalAPIDoAn.MyModels;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace FinalAPIDoAn.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/product-discounts")]
     [ApiController]
     public class PDiscountController : ControllerBase
     {
@@ -14,65 +14,95 @@ namespace FinalAPIDoAn.Controllers
         {
             _dbc = dbc;
         }
+
         [HttpGet("List")]
-        public IActionResult GetAllPDiscount()
+        public IActionResult GetAllPDiscounts()
         {
-            var pdiscount = _dbc.ProductDiscounts.ToList();
-            return Ok(new { data = pdiscount });
+            var pdiscounts = _dbc.ProductDiscounts.ToList();
+            return Ok(new { data = pdiscounts });
         }
-        [HttpGet("Search")]
-        public IActionResult GetPDiscountById(int id)
+
+        [HttpGet("Search/{productId}/{discountId}")]
+        public IActionResult GetPDiscountById(int productId, int discountId)
         {
-            var pdiscount = _dbc.ProductDiscounts.SingleOrDefault(o => o.ProductId == id);
-            if (pdiscount == null) return NotFound(new { message = "Discount not found." });
+            var pdiscount = _dbc.ProductDiscounts
+                .SingleOrDefault(o => o.ProductId == productId && o.DiscountId == discountId);
+
+            if (pdiscount == null)
+                return NotFound(new { message = "Discount not found." });
 
             return Ok(new { data = pdiscount });
         }
+
         [HttpPost("Add")]
         public IActionResult AddPDiscount([FromBody] PDiscountDto pdiscountDto)
         {
-            if (pdiscountDto.ProductID <= 0|| pdiscountDto.DiscountID <= 0)
-            {
-                return BadRequest(new { message = "Invalid data." });
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Kiểm tra nếu sản phẩm & giảm giá có tồn tại
+            if (!_dbc.Products.Any(p => p.ProductId == pdiscountDto.ProductID))
+                return BadRequest(new { message = "ProductID does not exist." });
+
+            if (!_dbc.Discounts.Any(d => d.DiscountId == pdiscountDto.DiscountID))
+                return BadRequest(new { message = "DiscountID does not exist." });
+
+            // Kiểm tra nếu giảm giá đã tồn tại cho sản phẩm này
+            if (_dbc.ProductDiscounts.Any(pd => pd.ProductId == pdiscountDto.ProductID && pd.DiscountId == pdiscountDto.DiscountID))
+                return Conflict(new { message = "This discount is already applied to the product." });
+
             var pdiscount = new ProductDiscount
             {
                 DiscountId = pdiscountDto.DiscountID,
                 ProductId = pdiscountDto.ProductID
             };
+
             _dbc.ProductDiscounts.Add(pdiscount);
             _dbc.SaveChanges();
-            return CreatedAtAction(nameof(GetPDiscountById), new { id = pdiscount.DiscountId }, pdiscount);
+            return CreatedAtAction(nameof(GetPDiscountById), new { productId = pdiscount.ProductId, discountId = pdiscount.DiscountId }, pdiscount);
         }
-        [HttpPut("Update")]
-        public IActionResult UpdatePDiscountt([FromBody] PDiscountDto pdiscountDto)
+
+        [HttpPut("Update/{productId}/{discountId}")]
+        public IActionResult UpdatePDiscount(int productId, int discountId, [FromBody] PDiscountDto pdiscountDto)
         {
-            if (pdiscountDto.ProductID <= 0 || pdiscountDto.DiscountID <= 0)
-            {
-                return BadRequest(new { message = "Invalid data." });
-            }
-            var pdiscount = new ProductDiscount
-            {
-                DiscountId = pdiscountDto.DiscountID,
-                ProductId = pdiscountDto.ProductID
-            };
-            _dbc.ProductDiscounts.Update(pdiscount);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingPDiscount = _dbc.ProductDiscounts
+                .FirstOrDefault(pd => pd.ProductId == productId && pd.DiscountId == discountId);
+
+            if (existingPDiscount == null)
+                return NotFound(new { message = "Discount not found for this product." });
+
+            existingPDiscount.DiscountId = pdiscountDto.DiscountID;
+            existingPDiscount.ProductId = pdiscountDto.ProductID;
+
+            _dbc.ProductDiscounts.Update(existingPDiscount);
             _dbc.SaveChanges();
-            return CreatedAtAction(nameof(GetPDiscountById), new { id = pdiscount.DiscountId }, pdiscount);
+            return Ok(new { data = existingPDiscount });
         }
-        [HttpDelete("Delete")]
-        public IActionResult DeletePDiscount(int id)
+
+        [HttpDelete("Delete/{productId}/{discountId}")]
+        public IActionResult DeletePDiscount(int productId, int discountId)
         {
-            var pdiscount = _dbc.ProductDiscounts.SingleOrDefault(o => o.DiscountId == id);
-            if (pdiscount == null) return NotFound(new { message = "Discount not found." });
+            var pdiscount = _dbc.ProductDiscounts
+                .SingleOrDefault(pd => pd.ProductId == productId && pd.DiscountId == discountId);
+
+            if (pdiscount == null)
+                return NotFound(new { message = "Discount not found for this product." });
+
             _dbc.ProductDiscounts.Remove(pdiscount);
             _dbc.SaveChanges();
-            return Ok(new { message = "Discount deleted successfully." });
+            return Ok(new { message = "Discount removed from product successfully." });
         }
-        public class PDiscountDto
-        {
-            public required int DiscountID { get; set; }
-            public required int ProductID { get; set; }
-        }
+    }
+
+    public class PDiscountDto
+    {
+        [Required]
+        public int DiscountID { get; set; }
+
+        [Required]
+        public int ProductID { get; set; }
     }
 }

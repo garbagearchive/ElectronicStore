@@ -1,5 +1,6 @@
 ﻿using FinalAPIDoAn.MyModels;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace FinalAPIDoAn.Controllers
 {
@@ -20,18 +21,22 @@ namespace FinalAPIDoAn.Controllers
             var categories = _dbc.Categories.ToList();
             return Ok(new { data = categories });
         }
+
         [HttpGet("Search")]
         public IActionResult SearchCategory([FromQuery] string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
             {
-                return BadRequest(new { message = "Invalid search keyword" });
+                return BadRequest(new { message = "Invalid search keyword." });
             }
-            var results = _dbc.Categories.Where(s => s.CategoryName.Contains(keyword) || s.Description.Contains(keyword));
+
+            var results = _dbc.Categories
+                .Where(s => s.CategoryName.Contains(keyword) || s.Description.Contains(keyword))
+                .ToList();
 
             if (!results.Any())
             {
-                return NotFound(new { message = "No orders found matching the keyword." });
+                return NotFound(new { message = "No categories found matching the keyword." });
             }
 
             return Ok(new { data = results });
@@ -40,7 +45,7 @@ namespace FinalAPIDoAn.Controllers
         [HttpPost("Add")]
         public IActionResult AddCategory([FromBody] CategoryDto categoryDto)
         {
-            if (string.IsNullOrWhiteSpace(categoryDto.CategoryName))
+            if (categoryDto == null || string.IsNullOrWhiteSpace(categoryDto.CategoryName))
                 return BadRequest(new { message = "Category name is required." });
 
             var category = new Category
@@ -55,9 +60,12 @@ namespace FinalAPIDoAn.Controllers
             return CreatedAtAction(nameof(GetAllCategories), new { id = category.CategoryId }, category);
         }
 
-        [HttpPut("Update")]
+        [HttpPut("Update/{id}")]
         public IActionResult UpdateCategory(int id, [FromBody] CategoryDto categoryDto)
         {
+            if (categoryDto == null || string.IsNullOrWhiteSpace(categoryDto.CategoryName))
+                return BadRequest(new { message = "Invalid category data." });
+
             var category = _dbc.Categories.FirstOrDefault(c => c.CategoryId == id);
             if (category == null)
                 return NotFound(new { message = "Category not found." });
@@ -71,7 +79,7 @@ namespace FinalAPIDoAn.Controllers
             return Ok(new { data = category });
         }
 
-        [HttpDelete("Delete")]
+        [HttpDelete("Delete/{id}")]
         public IActionResult DeleteCategory(int id)
         {
             var category = _dbc.Categories.FirstOrDefault(c => c.CategoryId == id);
@@ -87,7 +95,11 @@ namespace FinalAPIDoAn.Controllers
 
     public class CategoryDto
     {
-        public required string CategoryName { get; set; }
-        public required string Description { get; set; }
+        [Required(ErrorMessage = "Category name is required.")]
+        [MaxLength(255, ErrorMessage = "Category name must be at most 255 characters.")]
+        public string CategoryName { get; set; }
+
+        [MaxLength(1000, ErrorMessage = "Description must be at most 1000 characters.")]
+        public string Description { get; set; }
     }
 }

@@ -1,98 +1,119 @@
 ﻿using FinalAPIDoAn.MyModels;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace FinalAPIDoAn.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/repairs")]
     [ApiController]
     public class RepairController : ControllerBase
     {
         private readonly KetNoiCSDL _dbc;
+
         public RepairController(KetNoiCSDL dbc)
         {
             _dbc = dbc;
         }
+
         [HttpGet("List")]
         public IActionResult GetAllRepair()
         {
-            var repair = _dbc.ProductRepairs.ToList();
-            return Ok(new { data = repair });
+            var repairs = _dbc.ProductRepairs.ToList();
+            return Ok(new { data = repairs });
         }
-        [HttpGet("Search")]
+
+        [HttpGet("Search/{id}")]
         public IActionResult GetRepairById(int id)
         {
-            var repair = _dbc.ProductRepairs.SingleOrDefault(o => o.ProductId == id);
-            if (repair == null) return NotFound(new { message = "Repair not found." });
+            var repair = _dbc.ProductRepairs.SingleOrDefault(r => r.RepairId == id);
+            if (repair == null)
+            {
+                return NotFound(new { message = "Repair not found." });
+            }
             return Ok(new { data = repair });
         }
+
         [HttpPost("Add")]
         public IActionResult AddRepair([FromBody] RepairDto repairDto)
         {
-            if (repairDto.RepairID <= 0 || repairDto.ProductID <= 0 || repairDto.UserID <= 0 || string.IsNullOrWhiteSpace(repairDto.IssueDescription))
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Invalid data." });
+                return BadRequest(ModelState);
             }
 
             var repair = new ProductRepair
             {
-                RepairId = repairDto.RepairID,
                 ProductId = repairDto.ProductID,
                 UserId = repairDto.UserID,
                 IssueDescription = repairDto.IssueDescription,
-                RepairStatus = repairDto.RepairStatus ?? "Pending"
+                RepairStatus = repairDto.RepairStatus ?? "Pending",
+                RepairRequestDate = repairDto.RepairRequestDate,
+                RepairCompletionDate = repairDto.RepairCompletionDate
             };
-
 
             _dbc.ProductRepairs.Add(repair);
             _dbc.SaveChanges();
 
-            return CreatedAtAction(nameof(GetRepairById), new { id = repair.ProductId }, repair);
+            return CreatedAtAction(nameof(GetRepairById), new { id = repair.RepairId }, repair);
         }
-        [HttpPut(" Update")]
-        public IActionResult UpdateRepair([FromBody] RepairDto repairDto)
+
+        [HttpPut("Update/{id}")]
+        public IActionResult UpdateRepair(int id, [FromBody] RepairDto repairDto)
         {
-            if (repairDto.RepairID <= 0 || repairDto.ProductID <= 0 || repairDto.UserID <= 0 || string.IsNullOrWhiteSpace(repairDto.IssueDescription))
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Invalid data." });
+                return BadRequest(ModelState);
             }
 
-            var repair = new ProductRepair
+            var repair = _dbc.ProductRepairs.FirstOrDefault(r => r.RepairId == id);
+            if (repair == null)
             {
-                RepairId = repairDto.RepairID,
-                ProductId = repairDto.ProductID,
-                UserId = repairDto.UserID,
-                IssueDescription = repairDto.IssueDescription,
-                RepairStatus = repairDto.RepairStatus ?? "Success",
-                RepairCompletionDate = repairDto.RepairCompletionDate
-            };
+                return NotFound(new { message = "Repair not found." });
+            }
 
+            repair.ProductId = repairDto.ProductID;
+            repair.UserId = repairDto.UserID;
+            repair.IssueDescription = repairDto.IssueDescription;
+            repair.RepairStatus = repairDto.RepairStatus ?? "Success";
+            repair.RepairCompletionDate = repairDto.RepairCompletionDate;
 
             _dbc.ProductRepairs.Update(repair);
             _dbc.SaveChanges();
 
-            return CreatedAtAction(nameof(GetRepairById), new { id = repair.ProductId }, repair);
+            return Ok(new { data = repair });
         }
 
-        [HttpDelete("Delete")]
-        public IActionResult DeleteUpdate(int repairid)
+        [HttpDelete("Delete/{repairid}")]
+        public IActionResult DeleteRepair(int repairid)
         {
-            var repair= _dbc.ProductRepairs.SingleOrDefault(o => o.ProductId == repairid);
-            if (repair == null) return NotFound(new { message = "Not found." });
+            var repair = _dbc.ProductRepairs.FirstOrDefault(r => r.RepairId == repairid);
+            if (repair == null)
+            {
+                return NotFound(new { message = "Repair not found." });
+            }
+
             _dbc.ProductRepairs.Remove(repair);
             _dbc.SaveChanges();
             return Ok(new { message = "Deleted successfully." });
         }
-
     }
+
     public class RepairDto
     {
-        public required int RepairID { get; set; }
-        public required int ProductID { get; set; }
-        public required int UserID { get; set; }
-        public required DateTime RepairRequestDate { get; set; }
-        public required string IssueDescription { get; set; }
-        public required string RepairStatus{ get; set; }
-        public required DateTime RepairCompletionDate { get; set; }
+        [Required]
+        public int ProductID { get; set; }
+
+        [Required]
+        public int UserID { get; set; }
+
+        [Required]
+        public DateTime RepairRequestDate { get; set; }
+
+        [Required]
+        public string IssueDescription { get; set; }
+
+        public string RepairStatus { get; set; } = "Pending";
+
+        public DateTime? RepairCompletionDate { get; set; }
     }
 }
