@@ -148,54 +148,6 @@ CREATE INDEX IX_ProductRepairs_UserID ON ProductRepairs(UserID);
 CREATE INDEX IX_ProductDiscounts_ProductID ON ProductDiscounts(ProductID);
 CREATE INDEX IX_ProductDiscounts_DiscountID ON ProductDiscounts(DiscountID);
 
--- Thêm dữ liệu mẫu
-INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, Address, Role) VALUES
-('admin', 'hashed_password_admin', 'Admin User', 'admin@onlinestore.com', '0123456789', '123 Admin St', 'Admin'),
-('john_doe', 'hashed_password_john', 'John Doe', 'john@example.com', '0987654321', '456 John St', 'Customer');
-
-INSERT INTO Categories (CategoryName, Description) VALUES
-('Smartphones', 'Latest smartphones from top brands'),
-('Laptops', 'High-performance laptops for work and play'),
-('Home Appliances', 'Appliances for everyday use');
-
-INSERT INTO Products (ProductName, Description, Price, StockQuantity, CategoryID) VALUES
-('iPhone 14 Pro', 'Apple iPhone 14 Pro with A16 Bionic chip', 999.99, 25, 1),
-('Samsung Galaxy S23', 'Samsung flagship smartphone', 849.99, 30, 1),
-('Dell XPS 15', 'Powerful laptop with Intel i7 processor', 1499.99, 15, 2),
-('LG Smart Refrigerator', 'Energy-efficient smart fridge', 1199.99, 10, 3);
-
-INSERT INTO Orders (UserID, TotalAmount) VALUES
-(2, 1849.98);
-
-INSERT INTO OrderDetails (OrderID, ProductID, Quantity, Price) VALUES
-(1, 1, 1, 999.99),
-(1, 2, 1, 849.99);
-
-INSERT INTO ShoppingCart (UserID, ProductID, Quantity) VALUES
-(2, 3, 1),
-(2, 4, 1);
-
-INSERT INTO Payments (OrderID, PaymentMethod, Amount, PaymentStatus) VALUES
-(1, 'Credit Card', 1849.98, 'Paid');
-
-INSERT INTO Shipping (OrderID, ShippingAddress, ShippingMethod, TrackingNumber, EstimatedDeliveryDate, ShippingStatus) VALUES
-(1, '456 John St', 'Express', 'TRACK98765', '2025-03-01', 'Shipped');
-
-INSERT INTO ProductReviews (ProductID, UserID, Rating, Comment) VALUES
-(1, 2, 5, 'Absolutely love the new iPhone!'),
-(3, 2, 4, 'The Dell XPS 15 is powerful but pricey.');
-
-INSERT INTO ProductRepairs (ProductID, UserID, IssueDescription, RepairStatus) VALUES
-(2, 2, 'Battery draining quickly', 'In Progress');
-
-INSERT INTO Discounts (DiscountCode, Description, DiscountPercentage, StartDate, EndDate) VALUES
-('SPRING15', 'Spring Sale 15% Off', 15, '2025-04-01', '2025-04-30'),
-('BLACKFRIDAY', 'Black Friday 50% Off', 50, '2025-11-25', '2025-11-27');
-
-INSERT INTO ProductDiscounts (ProductID, DiscountID) VALUES
-(1, 1),
-(4, 2);
-
 -- Kiểm tra dữ liệu
 SELECT * FROM Users;
 SELECT * FROM Products;

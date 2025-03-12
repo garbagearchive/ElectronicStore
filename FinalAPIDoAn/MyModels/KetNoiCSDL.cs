@@ -67,8 +67,9 @@ public partial class KetNoiCSDL : DbContext
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF7C82EAD0");
-
+            
             entity.HasIndex(e => e.UserId, "IX_Orders_UserID");
+            entity.HasOne<User>().WithMany().HasForeignKey(o => o.UserId).OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.OrderDate)

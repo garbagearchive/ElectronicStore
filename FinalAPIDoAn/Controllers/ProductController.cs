@@ -42,6 +42,18 @@ namespace FinalAPIDoAn.Controllers
             return Ok(new { data = results });
         }
 
+        [HttpGet("Get/{id}")]
+        public IActionResult GetProductById(int id)
+        {
+            var product = _dbc.Products.FirstOrDefault(p => p.ProductId == id);
+            if (product == null)
+            {
+                return NotFound(new { message = "Product not found." });
+            }
+
+            return Ok(new { data = product });
+        }
+
         [HttpPost("Add")]
         public IActionResult AddProduct([FromBody] ProductDto productDto)
         {

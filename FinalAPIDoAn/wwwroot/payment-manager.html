@@ -1,0 +1,211 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2 style="color: white; text-align: center;">Navigation</h2>
+        <a href="/user-manager.html">User Manager</a>
+        <a href="/product-manager.html">Product Manager</a>
+        <a href="/product-discount-manager.html">Product discount Manager</a>
+        <a href="/order-manager.html">Order Manager</a>
+        <a href="/order-detail-manager.html">Order Detail Manager</a>
+        <a href="/cart-manager.html">Cart Manager</a>
+        <a href="/payment-manager.html">Payment Manager</a>
+        <a href="/shipping-manager.html">Shipping Manager</a>
+        <a href="/discount-manager.html">Discount Manager</a>
+        <a href="/repair-manager.html">Repair Manager</a>
+        <a href="/review-manager.html">Review Manager</a>
+
+    </div>
+    <div class="main-content">
+        <h1>Payment Management</h1>
+
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="number" id="searchId" placeholder="Search by Payment ID">
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Payment List -->
+        <table id="paymentTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Order ID</th>
+                    <th>Payment Date</th>
+                    <th>Payment Method</th>
+                    <th>Amount</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Payment rows will be populated here -->
+            </tbody>
+        </table>
+
+        <!-- Add/Edit Payment Form -->
+        <form id="paymentForm">
+            <input type="hidden" id="paymentId">
+            <input type="number" id="orderId" placeholder="Order ID" required>
+            <label for="paymentDate">Payment Date:</label>
+            <input type="datetime-local" id="paymentDate" required>
+            <input type="text" id="paymentMethod" placeholder="Payment Method" required>
+            <input type="number" id="amount" placeholder="Amount" step="0.01" min="0.01" required>
+            <select id="paymentStatus" required>
+                <option value="Pending">Pending</option>
+                <option value="Completed">Completed</option>
+                <option value="Failed">Failed</option>
+            </select>
+            <button type="submit" id="saveButton">Add Payment</button>
+            <button type="button" id="cancelButton" class="hidden">Cancel</button>
+        </form>
+    </div>
+    <script>
+        $(document).ready(function () {
+            loadPayments();
+
+            // Load all payments
+            function loadPayments() {
+                $.get('/api/payments/List', function (data) {
+                    $('#paymentTable tbody').empty();
+                    data.data.forEach(function (payment) {
+                        $('#paymentTable tbody').append(`
+                                        <tr>
+                                            <td>${payment.paymentId}</td>
+                                            <td>${payment.orderId}</td>
+                                            <td>${new Date(payment.paymentDate).toLocaleString()}</td>
+                                            <td>${payment.paymentMethod}</td>
+                                            <td>${payment.amount}</td>
+                                            <td>${payment.paymentStatus}</td>
+                                            <td>
+                                                <button onclick="editPayment(${payment.paymentId})">Edit</button>
+                                                <button onclick="deletePayment(${payment.paymentId})">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `);
+                    });
+                });
+            }
+
+            // Search payment by ID
+            $('#searchForm').submit(function (event) {
+                event.preventDefault();
+                var id = $('#searchId').val();
+                if (!id) {
+                    loadPayments(); // Reload all payments if no ID is provided
+                    return;
+                }
+
+                $.get(`/api/payments/Search/${id}`, function (data) {
+                    $('#paymentTable tbody').empty();
+                    if (data.data) {
+                        $('#paymentTable tbody').append(`
+                                        <tr>
+                                            <td>${data.data.paymentId}</td>
+                                            <td>${data.data.orderId}</td>
+                                            <td>${new Date(data.data.paymentDate).toLocaleString()}</td>
+                                            <td>${data.data.paymentMethod}</td>
+                                            <td>${data.data.amount}</td>
+                                            <td>${data.data.paymentStatus}</td>
+                                            <td>
+                                                <button onclick="editPayment(${data.data.paymentId})">Edit</button>
+                                                <button onclick="deletePayment(${data.data.paymentId})">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `);
+                    } else {
+                        alert('Payment not found.');
+                    }
+                });
+            });
+
+            // Add or Update Payment
+            $('#paymentForm').submit(function (event) {
+                event.preventDefault();
+                var payment = {
+                    paymentId: $('#paymentId').val(),
+                    orderID: parseInt($('#orderId').val()),
+                    paymentDate: new Date($('#paymentDate').val()).toISOString(),
+                    paymentMethod: $('#paymentMethod').val(),
+                    amount: parseFloat($('#amount').val()),
+                    paymentStatus: $('#paymentStatus').val()
+                };
+
+                var method = payment.paymentId ? 'PUT' : 'POST';
+                var url = payment.paymentId ? `/api/payments/Update/${payment.paymentId}` : '/api/payments/Add';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(payment),
+                    success: function () {
+                        loadPayments();
+                        resetForm();
+                    },
+                    error: function (xhr) {
+                        alert('Error: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
+
+            // Cancel Edit
+            $('#cancelButton').click(function () {
+                resetForm();
+            });
+
+            // Reset Form
+            function resetForm() {
+                $('#paymentId').val('');
+                $('#orderId').val('');
+                $('#paymentDate').val('');
+                $('#paymentMethod').val('');
+                $('#amount').val('');
+                $('#paymentStatus').val('Pending');
+                $('#saveButton').text('Add Payment');
+                $('#cancelButton').addClass('hidden');
+            }
+
+            // Edit Payment
+            window.editPayment = function (paymentId) {
+                $.get(`/api/payments/Search/${paymentId}`, function (data) {
+                    var payment = data.data;
+                    if (payment) {
+                        $('#paymentId').val(payment.paymentId);
+                        $('#orderId').val(payment.orderId);
+                        $('#paymentDate').val(new Date(payment.paymentDate).toISOString().slice(0, 16));
+                        $('#paymentMethod').val(payment.paymentMethod);
+                        $('#amount').val(payment.amount);
+                        $('#paymentStatus').val(payment.paymentStatus);
+                        $('#saveButton').text('Update Payment');
+                        $('#cancelButton').removeClass('hidden');
+                    }
+                }).fail(function () {
+                    alert('Failed to fetch payment details.');
+                });
+            };
+
+            // Delete Payment
+            window.deletePayment = function (paymentId) {
+                if (confirm('Are you sure you want to delete this payment?')) {
+                    $.ajax({
+                        url: `/api/payments/Delete/${paymentId}`,
+                        type: 'DELETE',
+                        success: function () {
+                            loadPayments();
+                        }
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2 style="color: white; text-align: center;">Navigation</h2>
+        <a href="/user-manager.html">User Manager</a>
+        <a href="/product-manager.html">Product Manager</a>
+        <a href="/product-discount-manager.html">Product discount Manager</a>
+        <a href="/order-manager.html">Order Manager</a>
+        <a href="/order-detail-manager.html">Order Detail Manager</a>
+        <a href="/cart-manager.html">Cart Manager</a>
+        <a href="/payment-manager.html">Payment Manager</a>
+        <a href="/shipping-manager.html">Shipping Manager</a>
+        <a href="/discount-manager.html">Discount Manager</a>
+        <a href="/repair-manager.html">Repair Manager</a>
+        <a href="/review-manager.html">Review Manager</a>
+
+    </div>
+    <div class="main-content">
+        <h1>Category Management</h1>
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="text" id="searchKeyword" placeholder="Search by name or description">
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Category List -->
+        <table id="categoryTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Category rows will be populated here -->
+            </tbody>
+        </table>
+
+        <!-- Add/Edit Category Form -->
+        <form id="categoryForm">
+            <input type="hidden" id="categoryId">
+            <input type="text" id="categoryName" placeholder="Category Name" required>
+            <input type="text" id="description" placeholder="Description">
+            <button type="submit" id="saveButton">Add Category</button>
+            <button type="button" id="cancelButton" class="hidden">Cancel</button>
+        </form>
+    </div>
+    <script>
+        $(document).ready(function () {
+            loadCategories();
+
+            // Load all categories
+            function loadCategories() {
+                $.get('/api/categories/List', function (data) {
+                    $('#categoryTable tbody').empty();
+                    data.data.forEach(function (category) {
+                        $('#categoryTable tbody').append(`
+                                    <tr>
+                                        <td>${category.categoryId}</td>
+                                        <td>${category.categoryName}</td>
+                                        <td>${category.description}</td>
+                                        <td>
+                                            <button onclick="editCategory(${category.categoryId})">Edit</button>
+                                            <button onclick="deleteCategory(${category.categoryId})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+                    });
+                });
+            }
+
+            // Search categories
+            $('#searchForm').submit(function (event) {
+                event.preventDefault();
+                var keyword = $('#searchKeyword').val();
+                $.get('/api/categories/Search', { keyword: keyword }, function (data) {
+                    $('#categoryTable tbody').empty();
+                    data.data.forEach(function (category) {
+                        $('#categoryTable tbody').append(`
+                                    <tr>
+                                        <td>${category.categoryId}</td>
+                                        <td>${category.categoryName}</td>
+                                        <td>${category.description}</td>
+                                        <td>
+                                            <button onclick="editCategory(${category.categoryId})">Edit</button>
+                                            <button onclick="deleteCategory(${category.categoryId})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+                    });
+                });
+            });
+
+            // Add or Update Category
+            $('#categoryForm').submit(function (event) {
+                event.preventDefault();
+                var category = {
+                    categoryId: $('#categoryId').val(),
+                    categoryName: $('#categoryName').val(),
+                    description: $('#description').val()
+                };
+
+                var method = category.categoryId ? 'PUT' : 'POST';
+                var url = category.categoryId ? `/api/categories/Update/${category.categoryId}` : '/api/categories/Add';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(category),
+                    success: function () {
+                        loadCategories();
+                        resetForm();
+                    }
+                });
+            });
+
+            // Cancel Edit
+            $('#cancelButton').click(function () {
+                resetForm();
+            });
+
+            // Reset Form
+            function resetForm() {
+                $('#categoryId').val('');
+                $('#categoryName').val('');
+                $('#description').val('');
+                $('#saveButton').text('Add Category');
+                $('#cancelButton').addClass('hidden');
+            }
+
+            // Edit Category
+            window.editCategory = function (categoryId) {
+                $.get(`/api/categories/Search?keyword=`, function (data) {
+                    var category = data.data.find(c => c.categoryId == categoryId);
+                    if (category) {
+                        $('#categoryId').val(category.categoryId);
+                        $('#categoryName').val(category.categoryName);
+                        $('#description').val(category.description);
+                        $('#saveButton').text('Update Category');
+                        $('#cancelButton').removeClass('hidden');
+                    }
+                }).fail(function () {
+                    alert('Failed to fetch category details.');
+                });
+            };
+
+            // Delete Category
+            window.deleteCategory = function (categoryId) {
+                if (confirm('Are you sure you want to delete this category?')) {
+                    $.ajax({
+                        url: `/api/categories/Delete/${categoryId}`,
+                        type: 'DELETE',
+                        success: function () {
+                            loadCategories();
+                        }
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

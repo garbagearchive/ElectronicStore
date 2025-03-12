@@ -19,7 +19,30 @@ namespace FinalAPIDoAn.Controllers
         [HttpGet("List")]
         public IActionResult GetAllCartDetails()
         {
-            var shoppingCarts = _dbc.ShoppingCarts.ToList();
+            var shoppingCarts = _dbc.ShoppingCarts
+                .Join(
+                    _dbc.Users,
+                    cart => cart.UserId,
+                    user => user.UserId,
+                    (cart, user) => new { Cart = cart, User = user }
+                )
+                .Join(
+                    _dbc.Products,
+                    combined => combined.Cart.ProductId,
+                    product => product.ProductId,
+                    (combined, product) => new
+                    {
+                        CartId = combined.Cart.CartId,
+                        UserId = combined.Cart.UserId,
+                        Username = combined.User.Username,
+                        ProductId = combined.Cart.ProductId,
+                        ProductName = product.ProductName,
+                        Quantity = combined.Cart.Quantity,
+                        AddedAt = combined.Cart.AddedAt
+                    }
+                )
+                .ToList();
+
             return Ok(new { data = shoppingCarts });
         }
 
@@ -38,8 +61,19 @@ namespace FinalAPIDoAn.Controllers
             if (cartDto == null)
                 return BadRequest(new { message = "Invalid cart data." });
 
-            if (cartDto.UserID <= 0 || cartDto.ProductID <= 0 || cartDto.Quantity <= 0)
-                return BadRequest(new { message = "Invalid cart data." });
+            // Check if the UserID exists
+            var userExists = _dbc.Users.Any(u => u.UserId == cartDto.UserID);
+            if (!userExists)
+                return BadRequest(new { message = "Invalid UserID. The user does not exist." });
+
+            // Check if the ProductID exists
+            var productExists = _dbc.Products.Any(p => p.ProductId == cartDto.ProductID);
+            if (!productExists)
+                return BadRequest(new { message = "Invalid ProductID. The product does not exist." });
+
+            // Validate Quantity
+            if (cartDto.Quantity <= 0)
+                return BadRequest(new { message = "Quantity must be greater than 0." });
 
             var cart = new ShoppingCart
             {
@@ -92,10 +126,6 @@ namespace FinalAPIDoAn.Controllers
 
     public class CartDto
     {
-        public int CartID { get; set; }
-
-        [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "UserID must be greater than 0.")]
         public int UserID { get; set; }
 
         [Required]

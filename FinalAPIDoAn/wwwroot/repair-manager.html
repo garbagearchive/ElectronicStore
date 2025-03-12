@@ -1,0 +1,220 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repair Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2 style="color: white; text-align: center;">Navigation</h2>
+        <a href="/user-manager.html">User Manager</a>
+        <a href="/product-manager.html">Product Manager</a>
+        <a href="/product-discount-manager.html">Product discount Manager</a>
+        <a href="/order-manager.html">Order Manager</a>
+        <a href="/order-detail-manager.html">Order Detail Manager</a>
+        <a href="/cart-manager.html">Cart Manager</a>
+        <a href="/payment-manager.html">Payment Manager</a>
+        <a href="/shipping-manager.html">Shipping Manager</a>
+        <a href="/discount-manager.html">Discount Manager</a>
+        <a href="/repair-manager.html">Repair Manager</a>
+        <a href="/review-manager.html">Review Manager</a>
+
+    </div>
+    <div class="main-content">
+        <h1>Repair Management</h1>
+
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="number" id="searchId" placeholder="Search by Repair ID">
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Repair List -->
+        <table id="repairTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Product ID</th>
+                    <th>User ID</th>
+                    <th>Issue Description</th>
+                    <th>Repair Status</th>
+                    <th>Request Date</th>
+                    <th>Completion Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Repair rows will be populated here -->
+            </tbody>
+        </table>
+
+        <!-- Add/Edit Repair Form -->
+        <form id="repairForm">
+            <input type="hidden" id="repairId">
+            <input type="number" id="productId" placeholder="Product ID" required>
+            <input type="number" id="userId" placeholder="User ID" required>
+            <textarea id="issueDescription" placeholder="Issue Description" required></textarea>
+            <select id="repairStatus" required>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Failed">Failed</option>
+            </select>
+            <label for="repairRequestDate">Request Date:</label>
+            <input type="datetime-local" id="repairRequestDate" required>
+            <label for="repairCompletionDate">Completion Date:</label>
+            <input type="datetime-local" id="repairCompletionDate">
+            <button type="submit" id="saveButton">Add Repair</button>
+            <button type="button" id="cancelButton" class="hidden">Cancel</button>
+        </form>
+    </div>
+    <script>
+        $(document).ready(function () {
+            loadRepairs();
+
+            // Load all repairs
+            function loadRepairs() {
+                $.get('/api/repairs/List', function (data) {
+                    $('#repairTable tbody').empty();
+                    data.data.forEach(function (repair) {
+                        $('#repairTable tbody').append(`
+                                    <tr>
+                                        <td>${repair.repairId}</td>
+                                        <td>${repair.productId}</td>
+                                        <td>${repair.userId}</td>
+                                        <td>${repair.issueDescription}</td>
+                                        <td>${repair.repairStatus}</td>
+                                        <td>${new Date(repair.repairRequestDate).toLocaleString()}</td>
+                                        <td>${repair.repairCompletionDate ? new Date(repair.repairCompletionDate).toLocaleString() : 'N/A'}</td>
+                                        <td>
+                                            <button onclick="editRepair(${repair.repairId})">Edit</button>
+                                            <button onclick="deleteRepair(${repair.repairId})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+                    });
+                });
+            }
+
+            // Search repair by ID
+            $('#searchForm').submit(function (event) {
+                event.preventDefault();
+                var id = $('#searchId').val();
+                if (!id) {
+                    loadRepairs(); // Reload all repairs if no ID is provided
+                    return;
+                }
+
+                $.get(`/api/repairs/Search/${id}`, function (data) {
+                    $('#repairTable tbody').empty();
+                    if (data.data) {
+                        $('#repairTable tbody').append(`
+                                    <tr>
+                                        <td>${data.data.repairId}</td>
+                                        <td>${data.data.productId}</td>
+                                        <td>${data.data.userId}</td>
+                                        <td>${data.data.issueDescription}</td>
+                                        <td>${data.data.repairStatus}</td>
+                                        <td>${new Date(data.data.repairRequestDate).toLocaleString()}</td>
+                                        <td>${data.data.repairCompletionDate ? new Date(data.data.repairCompletionDate).toLocaleString() : 'N/A'}</td>
+                                        <td>
+                                            <button onclick="editRepair(${data.data.repairId})">Edit</button>
+                                            <button onclick="deleteRepair(${data.data.repairId})">Delete</button>
+                                        </td>
+                                    </tr>
+                                `);
+                    } else {
+                        alert('Repair not found.');
+                    }
+                });
+            });
+
+            // Add or Update Repair
+            $('#repairForm').submit(function (event) {
+                event.preventDefault();
+                var repair = {
+                    repairId: $('#repairId').val(),
+                    productID: parseInt($('#productId').val()),
+                    userID: parseInt($('#userId').val()),
+                    issueDescription: $('#issueDescription').val(),
+                    repairStatus: $('#repairStatus').val(),
+                    repairRequestDate: new Date($('#repairRequestDate').val()).toISOString(),
+                    repairCompletionDate: $('#repairCompletionDate').val() ? new Date($('#repairCompletionDate').val()).toISOString() : null
+                };
+
+                var method = repair.repairId ? 'PUT' : 'POST';
+                var url = repair.repairId ? `/api/repairs/Update/${repair.repairId}` : '/api/repairs/Add';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(repair),
+                    success: function () {
+                        loadRepairs();
+                        resetForm();
+                    },
+                    error: function (xhr) {
+                        alert('Error: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
+
+            // Cancel Edit
+            $('#cancelButton').click(function () {
+                resetForm();
+            });
+
+            // Reset Form
+            function resetForm() {
+                $('#repairId').val('');
+                $('#productId').val('');
+                $('#userId').val('');
+                $('#issueDescription').val('');
+                $('#repairStatus').val('Pending');
+                $('#repairRequestDate').val('');
+                $('#repairCompletionDate').val('');
+                $('#saveButton').text('Add Repair');
+                $('#cancelButton').addClass('hidden');
+            }
+
+            // Edit Repair
+            window.editRepair = function (repairId) {
+                $.get(`/api/repairs/Search/${repairId}`, function (data) {
+                    var repair = data.data;
+                    if (repair) {
+                        $('#repairId').val(repair.repairId);
+                        $('#productId').val(repair.productId);
+                        $('#userId').val(repair.userId);
+                        $('#issueDescription').val(repair.issueDescription);
+                        $('#repairStatus').val(repair.repairStatus);
+                        $('#repairRequestDate').val(new Date(repair.repairRequestDate).toISOString().slice(0, 16));
+                        $('#repairCompletionDate').val(repair.repairCompletionDate ? new Date(repair.repairCompletionDate).toISOString().slice(0, 16) : '');
+                        $('#saveButton').text('Update Repair');
+                        $('#cancelButton').removeClass('hidden');
+                    }
+                }).fail(function () {
+                    alert('Failed to fetch repair details.');
+                });
+            };
+
+            // Delete Repair
+            window.deleteRepair = function (repairId) {
+                if (confirm('Are you sure you want to delete this repair?')) {
+                    $.ajax({
+                        url: `/api/repairs/Delete/${repairId}`,
+                        type: 'DELETE',
+                        success: function () {
+                            loadRepairs();
+                        }
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

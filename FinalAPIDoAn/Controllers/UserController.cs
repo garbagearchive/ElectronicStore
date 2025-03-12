@@ -36,6 +36,17 @@ namespace FinalAPIDoAn.Controllers
             return Ok(new { data = results });
         }
 
+        [HttpGet("Get/{id}")]
+        public IActionResult GetUserById(int id)
+        {
+            var user = _dbc.Users.SingleOrDefault(u => u.UserId == id);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            return Ok(new { data = user });
+        }
+
+
         [HttpPost("Add")]
         public IActionResult AddUser([FromBody] UserDto userDto)
         {
@@ -90,12 +101,16 @@ namespace FinalAPIDoAn.Controllers
             if (user == null)
                 return NotFound(new { message = "User not found." });
 
+            var userCartItems = _dbc.ShoppingCarts.Where(c => c.UserId == id).ToList();
+            _dbc.ShoppingCarts.RemoveRange(userCartItems);
+
             _dbc.Users.Remove(user);
             _dbc.SaveChanges();
 
             return Ok(new { message = "User deleted successfully." });
         }
     }
+       
 
     public class UserDto
     {
