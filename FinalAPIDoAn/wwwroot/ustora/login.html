@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register - Ustora</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: url('https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .container-box {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(255, 253, 253, 0.6);
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease-in-out;
+        }
+        .container-box:hover {
+            background: rgba(4, 239, 63, 0.6);
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-control {
+            transition: all 0.3s ease-in-out;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.6);
+        }
+        .form-control:hover {
+            border-color: #c803ff;
+            box-shadow: 0 0 8px rgba(135, 40, 167, 0.6);
+        }
+        .btn {
+            transition: all 0.3s ease-in-out;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary:hover {
+            background-color: #a2fb07;
+            border-color: #004085;
+        }
+        .btn-secondary:hover {
+            background-color: #0a0a0a;
+            border-color: #545b62;
+        }
+        .btn-success:hover {
+            background-color: #fb0707;
+            border-color: #1e7e34;
+        }
+        .btn-warning:hover {
+            background-color: #fa03bc;
+            border-color: #d39e00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-box" id="loginForm">
+        <h2 class="title">Login</h2>
+        <form>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="rememberMe">
+                <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <div class="text-center mt-3">
+                <a href="#" onclick="showForgotPassword()">Forgot password?</a> | <a href="#" onclick="showRegister()">Register</a>
+            </div>
+        </form>
+        <button class="btn btn-secondary w-100 mt-3" onclick="goToIndex()">Exit</button>
+    </div>
+    
+    <div class="container-box" id="registerForm" style="display: none;">
+        <h2 class="title">Register</h2>
+        <form>
+            <div class="mb-3">
+                <label for="fullname" class="form-label">Name</label>
+                <input type="text" class="form-control" id="fullname" placeholder="Enter namr" required>
+            </div>
+            <div class="mb-3">
+                <label for="registerEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="registerEmail" placeholder="Enter email" required>
+            </div>
+            <div class="mb-3">
+                <label for="registerPassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="registerPassword" placeholder="Enter password" required>
+            </div>
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm password</label>
+                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm password" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Register</button>
+            <div class="text-center mt-3">
+                <a href="#" onclick="showLogin()">Already have account? Login</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="container-box" id="forgotPasswordForm" style="display: none;">
+        <h2 class="title">Forgot password</h2>
+        <form>
+            <div class="mb-3">
+                <label for="forgotEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="forgotEmail" placeholder="Enter email to reset password" required>
+            </div>
+            <button type="submit" class="btn btn-warning w-100">Send request</button>
+            <div class="text-center mt-3">
+                <a href="#" onclick="showLogin()">Return to login</a>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+        function showRegister() {
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("registerForm").style.display = "block";
+            document.getElementById("forgotPasswordForm").style.display = "none";
+        }
+        function showLogin() {
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("loginForm").style.display = "block";
+            document.getElementById("forgotPasswordForm").style.display = "none";
+        }
+        function showForgotPassword() {
+            document.getElementById("loginForm").style.display = "none";
+            document.getElementById("registerForm").style.display = "none";
+            document.getElementById("forgotPasswordForm").style.display = "block";
+        }
+        function goToIndex() {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

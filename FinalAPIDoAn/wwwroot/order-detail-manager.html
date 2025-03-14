@@ -22,7 +22,6 @@
         <a href="/discount-manager.html">Discount Manager</a>
         <a href="/repair-manager.html">Repair Manager</a>
         <a href="/review-manager.html">Review Manager</a>
-
     </div>
     <div class="main-content">
         <h1>Order Detail Management</h1>
@@ -71,18 +70,18 @@
                     $('#orderDetailTable tbody').empty();
                     data.data.forEach(function (orderDetail) {
                         $('#orderDetailTable tbody').append(`
-                                    <tr>
-                                        <td>${orderDetail.orderDetailId}</td>
-                                        <td>${orderDetail.orderId}</td>
-                                        <td>${orderDetail.productId}</td>
-                                        <td>${orderDetail.quantity}</td>
-                                        <td>${orderDetail.price}</td>
-                                        <td>
-                                            <button onclick="editOrderDetail(${orderDetail.orderDetailId})">Edit</button>
-                                            <button onclick="deleteOrderDetail(${orderDetail.orderDetailId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                        <tr>
+                                            <td>${orderDetail.orderDetailId}</td>
+                                            <td>${orderDetail.orderId}</td>
+                                            <td>${orderDetail.productId}</td>
+                                            <td>${orderDetail.quantity}</td>
+                                            <td>${orderDetail.price}</td>
+                                            <td>
+                                                <button onclick="editOrderDetail(${orderDetail.orderDetailId})">Edit</button>
+                                                <button onclick="deleteOrderDetail(${orderDetail.orderDetailId})">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `);
                     });
                 });
             }
@@ -100,18 +99,18 @@
                     $('#orderDetailTable tbody').empty();
                     if (data.data) {
                         $('#orderDetailTable tbody').append(`
-                                    <tr>
-                                        <td>${data.data.orderDetailId}</td>
-                                        <td>${data.data.orderId}</td>
-                                        <td>${data.data.productId}</td>
-                                        <td>${data.data.quantity}</td>
-                                        <td>${data.data.price}</td>
-                                        <td>
-                                            <button onclick="editOrderDetail(${data.data.orderDetailId})">Edit</button>
-                                            <button onclick="deleteOrderDetail(${data.data.orderDetailId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                        <tr>
+                                            <td>${data.data.orderDetailId}</td>
+                                            <td>${data.data.orderId}</td>
+                                            <td>${data.data.productId}</td>
+                                            <td>${data.data.quantity}</td>
+                                            <td>${data.data.price}</td>
+                                            <td>
+                                                <button onclick="editOrderDetail(${data.data.orderDetailId})">Edit</button>
+                                                <button onclick="deleteOrderDetail(${data.data.orderDetailId})">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `);
                     } else {
                         alert('Order detail not found.');
                     }

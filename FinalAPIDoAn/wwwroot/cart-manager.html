@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <!-- Sidebar -->
     <div class="sidebar">
         <h2 style="color: white; text-align: center;">Navigation</h2>
@@ -23,9 +22,7 @@
         <a href="/discount-manager.html">Discount Manager</a>
         <a href="/repair-manager.html">Repair Manager</a>
         <a href="/review-manager.html">Review Manager</a>
-
     </div>
-
     
     <div class="main-content">
         <h1>Cart Management</h1>
@@ -90,8 +87,8 @@
             $('#cartForm').submit(function (event) {
                 event.preventDefault();
                 var cart = {
-                    userID: parseInt($('#userId').val()),
-                    productID: parseInt($('#productId').val()),
+                    userId: parseInt($('#userId').val()),
+                    productId: parseInt($('#productId').val()),
                     quantity: parseInt($('#quantity').val())
                 };
 
@@ -147,7 +144,7 @@
             window.deleteCart = function (cartId) {
                 if (confirm('Are you sure you want to delete this cart item?')) {
                     $.ajax({
-                        url: `/api/Cart/Delete/${cartId}`,
+                        url: `/api/Cart/Delete/${CartID}`,
                         type: 'DELETE',
                         success: function () {
                             loadCarts();

@@ -22,7 +22,6 @@
         <a href="/discount-manager.html">Discount Manager</a>
         <a href="/repair-manager.html">Repair Manager</a>
         <a href="/review-manager.html">Review Manager</a>
-
     </div>
     <div class="main-content">
         <h1>Product Management</h1>
@@ -75,20 +74,20 @@
                     $('#productTable tbody').empty();
                     data.data.forEach(function (product) {
                         $('#productTable tbody').append(`
-                                    <tr>
-                                        <td>${product.productId}</td>
-                                        <td>${product.productName}</td>
-                                        <td>${product.description}</td>
-                                        <td>${product.price}</td>
-                                        <td>${product.stockQuantity}</td>
-                                        <td>${product.categoryId}</td>
-                                        <td>${product.imageUrl}</td>
-                                        <td>
-                                            <button onclick="editProduct(${product.productId})">Edit</button>
-                                            <button onclick="deleteProduct(${product.productId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                        <tr>
+                                            <td>${product.productId}</td>
+                                            <td>${product.productName}</td>
+                                            <td>${product.description}</td>
+                                            <td>${product.price}</td>
+                                            <td>${product.stockQuantity}</td>
+                                            <td>${product.categoryId}</td>
+                                            <td>${product.imageUrl}</td>
+                                            <td>
+                                                <button onclick="editProduct(${product.productId})">Edit</button>
+                                                <button onclick="deleteProduct(${product.productId})">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `);
                     });
                 });
             }
@@ -101,20 +100,20 @@
                     $('#productTable tbody').empty();
                     data.data.forEach(function (product) {
                         $('#productTable tbody').append(`
-                                    <tr>
-                                        <td>${product.productId}</td>
-                                        <td>${product.productName}</td>
-                                        <td>${product.description}</td>
-                                        <td>${product.price}</td>
-                                        <td>${product.stockQuantity}</td>
-                                        <td>${product.categoryId}</td>
-                                        <td>${product.imageUrl}</td>
-                                        <td>
-                                            <button onclick="editProduct(${product.productId})">Edit</button>
-                                            <button onclick="deleteProduct(${product.productId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                        <tr>
+                                            <td>${product.productId}</td>
+                                            <td>${product.productName}</td>
+                                            <td>${product.description}</td>
+                                            <td>${product.price}</td>
+                                            <td>${product.stockQuantity}</td>
+                                            <td>${product.categoryId}</td>
+                                            <td>${product.imageUrl}</td>
+                                            <td>
+                                                <button onclick="editProduct(${product.productId})">Edit</button>
+                                                <button onclick="deleteProduct(${product.productId})">Delete</button>
+                                            </td>
+                                        </tr>
+                                    `);
                     });
                 });
             });
