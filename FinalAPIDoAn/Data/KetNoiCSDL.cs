@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using FinalAPIDoAn.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace FinalAPIDoAn.MyModels;
+namespace FinalAPIDoAn.Data;
 
-public partial class KetNoiCSDL : DbContext
+public partial class KetNoiCSDL : IdentityDbContext<IdentityUser>
 {
-    public KetNoiCSDL()
-    {
-    }
-
-    public KetNoiCSDL(DbContextOptions<KetNoiCSDL> options)
-        : base(options)
+    public KetNoiCSDL(DbContextOptions<KetNoiCSDL> options) :  base(options)
     {
     }
 
@@ -43,7 +41,6 @@ public partial class KetNoiCSDL : DbContext
         modelBuilder.Entity<Category>(entity =>
         {
             entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A2B09AE5E7A");
-
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.CategoryName).HasMaxLength(50);
             entity.Property(e => e.Description).HasMaxLength(255);
@@ -52,9 +49,7 @@ public partial class KetNoiCSDL : DbContext
         modelBuilder.Entity<Discount>(entity =>
         {
             entity.HasKey(e => e.DiscountId).HasName("PK__Discount__E43F6DF6747F495E");
-
             entity.HasIndex(e => e.DiscountCode, "UQ__Discount__A1120AF5E9956701").IsUnique();
-
             entity.Property(e => e.DiscountId).HasColumnName("DiscountID");
             entity.Property(e => e.Description).HasMaxLength(255);
             entity.Property(e => e.DiscountCode).HasMaxLength(50);
@@ -67,10 +62,8 @@ public partial class KetNoiCSDL : DbContext
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BAF7C82EAD0");
-            
             entity.HasIndex(e => e.UserId, "IX_Orders_UserID");
             entity.HasOne<User>().WithMany().HasForeignKey(o => o.UserId).OnDelete(DeleteBehavior.Cascade);
-
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.OrderDate)
                 .HasDefaultValueSql("(getdate())")
@@ -95,16 +88,13 @@ public partial class KetNoiCSDL : DbContext
         modelBuilder.Entity<OrderDetail>(entity =>
         {
             entity.HasKey(e => e.OrderDetailId).HasName("PK__OrderDet__D3B9D30C09685113");
-
             entity.Property(e => e.OrderDetailId).HasColumnName("OrderDetailID");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.ProductId).HasColumnName("ProductID");
-
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.OrderId)
                 .HasConstraintName("FK__OrderDeta__Order__49C3F6B7");
-
             entity.HasOne(d => d.Product).WithMany(p => p.OrderDetails)
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK__OrderDeta__Produ__4AB81AF0");
@@ -113,7 +103,6 @@ public partial class KetNoiCSDL : DbContext
         modelBuilder.Entity<Payment>(entity =>
         {
             entity.HasKey(e => e.PaymentId).HasName("PK__Payments__9B556A589A085611");
-
             entity.Property(e => e.PaymentId).HasColumnName("PaymentID");
             entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
@@ -291,7 +280,7 @@ public partial class KetNoiCSDL : DbContext
             entity.Property(e => e.Phone).HasMaxLength(15);
             entity.Property(e => e.Role)
                 .HasMaxLength(20)
-                .HasDefaultValue("Customer");
+                .HasDefaultValue("User");
             entity.Property(e => e.Username).HasMaxLength(50);
         });
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FinalAPIDoAn.MyModels;
+namespace FinalAPIDoAn.Models;
 
 public partial class Payment
 {

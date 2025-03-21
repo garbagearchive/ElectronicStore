@@ -1,4 +1,5 @@
-﻿using FinalAPIDoAn.MyModels;
+﻿using FinalAPIDoAn.Data;
+using FinalAPIDoAn.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -123,10 +124,10 @@ namespace FinalAPIDoAn.Controllers
     public class ProductDto
     {
         [Required(ErrorMessage = "Product name is required.")]
-        public string ProductName { get; set; }
+        public required string ProductName { get; set; }
 
         [Required(ErrorMessage = "Description is required.")]
-        public string Description { get; set; }
+        public  required string Description { get; set; }
 
         [Required(ErrorMessage = "Price is required.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")]
@@ -140,6 +141,6 @@ namespace FinalAPIDoAn.Controllers
         public int CategoryID { get; set; }
 
         [Required(ErrorMessage = "Image URL is required.")]
-        public string ImageURL { get; set; }
+        public  required string ImageURL { get; set; }
     }
 }

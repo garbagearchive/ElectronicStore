@@ -1,4 +1,5 @@
-﻿using FinalAPIDoAn.MyModels;
+﻿using FinalAPIDoAn.Data;
+using FinalAPIDoAn.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;

@@ -1,7 +1,8 @@
-﻿using System;
+﻿using FinalAPIDoAn.Models;
+using System;
 using System.Collections.Generic;
 
-namespace FinalAPIDoAn.MyModels;
+namespace FinalAPIDoAn.Models;
 
 public partial class Order
 {
