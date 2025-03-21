@@ -1,4 +1,5 @@
 using FinalAPIDoAn.Data;
+using FinalAPIDoAn.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,22 +11,14 @@ string strcnn = builder.Configuration.GetConnectionString("cnn");
 builder.Services.AddDbContext<KetNoiCSDL>(options => options.UseSqlServer(strcnn));
 
 // Add services to the container.
-
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add JWT Authentication
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
-{
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireDigit = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
-}).AddEntityFrameworkStores<KetNoiCSDL>()
-.AddDefaultTokenProviders();
+// Add Identity with custom User and Role types
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -49,8 +42,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization(Options =>
 {
-    Options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
-    Options.AddPolicy("UserPolicy", policy => policy.RequireRole("User"));
+    Options.AddPolicy("AdminPolicy", policy => policy.RequireClaim("Admin"));
+    Options.AddPolicy("UserPolicy", policy => policy.RequireClaim("User"));
 
 });
 var app = builder.Build();

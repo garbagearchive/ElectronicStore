@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 namespace FinalAPIDoAn.Models;
 
-public partial class User : IdentityUser
+public partial class User 
 {
     public int UserId { get; set; }
 

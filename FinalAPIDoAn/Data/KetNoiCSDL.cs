@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinalAPIDoAn.Data;
 
-public partial class KetNoiCSDL : IdentityDbContext<IdentityUser>
+public partial class KetNoiCSDL : DbContext
 {
     public KetNoiCSDL(DbContextOptions<KetNoiCSDL> options) :  base(options)
     {
@@ -34,8 +34,8 @@ public partial class KetNoiCSDL : IdentityDbContext<IdentityUser>
     public virtual DbSet<Shipping> Shippings { get; set; }
 
     public virtual DbSet<ShoppingCart> ShoppingCarts { get; set; }
-
     public virtual DbSet<User> Users { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Category>(entity =>
@@ -283,6 +283,42 @@ public partial class KetNoiCSDL : IdentityDbContext<IdentityUser>
                 .HasDefaultValue("User");
             entity.Property(e => e.Username).HasMaxLength(50);
         });
+        // Configure IdentityUserLogin<int>
+        modelBuilder.Entity<IdentityUserLogin<int>>(entity =>
+        {
+            entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
+        });
+
+        // Configure IdentityUserRole<int>
+        modelBuilder.Entity<IdentityUserRole<int>>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.RoleId });
+        });
+
+        // Configure IdentityUserClaim<int>
+        modelBuilder.Entity<IdentityUserClaim<int>>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        // Configure IdentityUserToken<int>
+        modelBuilder.Entity<IdentityUserToken<int>>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
+        });
+
+        // Configure IdentityRoleClaim<int>
+        modelBuilder.Entity<IdentityRoleClaim<int>>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        // Configure IdentityRole<int>
+        modelBuilder.Entity<IdentityRole<int>>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }
