@@ -26,8 +26,7 @@ namespace FinalAPIDoAn.Controllers
                     cart => cart.UserId,
                     user => user.UserId,
                     (cart, user) => new { Cart = cart, User = user }
-                )
-                .Join(
+                ).Join(
                     _dbc.Products,
                     combined => combined.Cart.ProductId,
                     product => product.ProductId,
@@ -41,8 +40,7 @@ namespace FinalAPIDoAn.Controllers
                         Quantity = combined.Cart.Quantity,
                         AddedAt = combined.Cart.AddedAt
                     }
-                )
-                .ToList();
+                ).ToList();
 
             return Ok(new { data = shoppingCarts });
         }

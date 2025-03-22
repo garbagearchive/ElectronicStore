@@ -13,7 +13,7 @@
         <h2 style="color: white; text-align: center;">Navigation</h2>
         <a href="/user-manager.html">User Manager</a>
         <a href="/product-manager.html">Product Manager</a>
-        <a href="/product-discount-manager.html">Product discount Manager</a>
+        <a href="/product-discount-manager.html">Product Discount Manager</a>
         <a href="/order-manager.html">Order Manager</a>
         <a href="/order-detail-manager.html">Order Detail Manager</a>
         <a href="/cart-manager.html">Cart Manager</a>
@@ -37,8 +37,10 @@
         <table id="pdiscountTable">
             <thead>
                 <tr>
-                    <th>Product ID</th>
                     <th>Discount ID</th>
+                    <th>Discount Code</th>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -66,15 +68,17 @@
                     $('#pdiscountTable tbody').empty();
                     data.data.forEach(function (pdiscount) {
                         $('#pdiscountTable tbody').append(`
-                                    <tr>
-                                        <td>${pdiscount.productId}</td>
-                                        <td>${pdiscount.discountId}</td>
-                                        <td>
-                                            <button onclick="editPDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Edit</button>
-                                            <button onclick="deletePDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                <tr>
+                                    <td>${pdiscount.discountId}</td>
+                                    <td>${pdiscount.discountCode}</td>
+                                    <td>${pdiscount.productId}</td>
+                                    <td>${pdiscount.productName}</td>
+                                    <td>
+                                        <button onclick="editPDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Edit</button>
+                                        <button onclick="deletePDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
                     });
                 });
             }
@@ -94,15 +98,17 @@
                     $('#pdiscountTable tbody').empty();
                     if (data.data) {
                         $('#pdiscountTable tbody').append(`
-                                    <tr>
-                                        <td>${data.data.productId}</td>
-                                        <td>${data.data.discountId}</td>
-                                        <td>
-                                            <button onclick="editPDiscount(${data.data.productId}, ${data.data.discountId})">Edit</button>
-                                            <button onclick="deletePDiscount(${data.data.productId}, ${data.data.discountId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                <tr>
+                                    <td>${data.data.discountId}</td>
+                                    <td>${data.data.discountCode}</td>
+                                    <td>${data.data.productId}</td>
+                                    <td>${data.data.productName}</td>
+                                    <td>
+                                        <button onclick="editPDiscount(${data.data.productId}, ${data.data.discountId})">Edit</button>
+                                        <button onclick="deletePDiscount(${data.data.productId}, ${data.data.discountId})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
                     } else {
                         alert('Product discount not found.');
                     }

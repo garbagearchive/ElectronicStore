@@ -63,7 +63,7 @@ namespace FinalAPIDoAn.Controllers
                 Email = userDto.Email,
                 Phone = userDto.Phone,
                 Address = userDto.Address,
-                Role = userDto.Role ?? "Buyer"
+                Role = userDto.Role ?? "Customer"
             };
 
             _dbc.Users.Add(user);
@@ -88,7 +88,7 @@ namespace FinalAPIDoAn.Controllers
             user.Email = userDto.Email;
             user.Phone = userDto.Phone;
             user.Address = userDto.Address;
-            user.Role = userDto.Role ?? "Buyer";
+            user.Role = userDto.Role ?? "Customer";
 
             _dbc.Users.Update(user);
             _dbc.SaveChanges();
@@ -105,6 +105,15 @@ namespace FinalAPIDoAn.Controllers
 
             var userCartItems = _dbc.ShoppingCarts.Where(c => c.UserId == id).ToList();
             _dbc.ShoppingCarts.RemoveRange(userCartItems);
+
+            var userOrders = _dbc.Orders.Where(o => o.UserId == id).ToList();
+            _dbc.Orders.RemoveRange(userOrders);
+
+            var userReview = _dbc.ProductReviews.Where(o => o.UserId == id).ToList();
+            _dbc.ProductReviews.RemoveRange(userReview);
+
+            var userRepair = _dbc.ProductRepairs.Where(o => o.UserId == id).ToList();
+            _dbc.ProductRepairs.RemoveRange(userRepair);
 
             _dbc.Users.Remove(user);
             _dbc.SaveChanges();

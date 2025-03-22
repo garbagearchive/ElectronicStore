@@ -16,7 +16,7 @@ public class AuthController : ControllerBase
         _dbc = dbc;
     }
 
-    [HttpPost("register")]
+    [HttpPost("Register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         // Kiểm tra dữ liệu đầu vào
@@ -57,7 +57,7 @@ public class AuthController : ControllerBase
 
 
 
-    [HttpPost("login")]
+    [HttpPost("Login")]
     public async Task<IActionResult> Login([FromQuery] string username, [FromQuery] string password)
     {
         var token = await _authService.Login(username, password);
@@ -67,6 +67,22 @@ public class AuthController : ControllerBase
         }
         return Ok(new { Token = token });
     }
+    [HttpPost("Assign Roles")]
+    public async Task<IActionResult> AssignRoles([FromBody] AssignRoleRequest request)
+    {
+        var user = await _dbc.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
+        if (user == null)
+        {
+            return NotFound("User not found");
+        }
+        if (string.IsNullOrEmpty(request.Role))
+        {
+            return BadRequest("Role is required");
+        }
+        user.Role = request.Role;
+        await _dbc.SaveChangesAsync();
+        return Ok(new { message = "Role assigned successfully!" });
+    }
     public class RegisterRequest
     {
         public string Username { get; set; }
@@ -75,5 +91,11 @@ public class AuthController : ControllerBase
         public string Email { get; set; }
         public string Phone { get; set; }
         public string Address { get; set; }
+        public string Role { get; set; }
+    }
+    public class AssignRoleRequest
+    {
+        public int UserId { get; set; } // ID của người dùng
+        public string Role { get; set; } // Vai trò mới (ví dụ: "Admin", "Customer")
     }
 }

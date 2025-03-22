@@ -19,8 +19,28 @@ namespace FinalAPIDoAn.Controllers
         [HttpGet("List")]
         public IActionResult GetAllPDiscounts()
         {
-            var pdiscounts = _dbc.ProductDiscounts.ToList();
-            return Ok(new { data = pdiscounts });
+            var pdiscount = _dbc.ProductDiscounts
+        .Join(
+            _dbc.Discounts,
+            productDiscount => productDiscount.DiscountId,
+            discount => discount.DiscountId,
+            (productDiscount, discount) => new { ProductDiscount = productDiscount, Discount = discount }
+        )
+        .Join(
+            _dbc.Products,
+            combined => combined.ProductDiscount.ProductId,
+            product => product.ProductId,
+            (combined, product) => new
+            {
+                DiscountId = combined.Discount.DiscountId,
+                DiscountCode = combined.Discount.DiscountCode, // Corrected: Get DiscountCode from Discounts table
+                ProductId = product.ProductId,
+                ProductName = product.ProductName
+            }
+        )
+        .ToList();
+
+            return Ok(new { data = pdiscount });
         }
 
         [HttpGet("Search/{productId}/{discountId}")]
