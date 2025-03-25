@@ -6,6 +6,99 @@
     <title>Cart Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            width: 300px;
+            border-radius: 8px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .modal.open {
+            display: block;
+        }
+
+        .modal-overlay.open {
+            display: block;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+        }
+
+        .modal form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .modal form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .modal form button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            .modal form button[type="submit"] {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .modal form button[type="button"] {
+                background-color: #dc3545;
+                color: white;
+            }
+
+        /* Search form styles */
+        #searchForm {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+            #searchForm input {
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                flex-grow: 1;
+            }
+
+            #searchForm button {
+                padding: 8px 16px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -23,9 +116,16 @@
         <a href="/repair-manager.html">Repair Manager</a>
         <a href="/review-manager.html">Review Manager</a>
     </div>
-    
+
     <div class="main-content">
         <h1>Cart Management</h1>
+
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="number" id="searchId" placeholder="Search by Cart ID">
+            <button type="submit">Search</button>
+        </form>
+
         <!-- Cart List -->
         <table id="cartTable">
             <thead>
@@ -44,17 +144,25 @@
                 <!-- Cart rows will be populated here -->
             </tbody>
         </table>
+    </div>
 
-        <!-- Add/Edit Cart Form -->
+    <!-- Modal for Edit Form -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="editModal">
+        <h2>Edit Cart Item</h2>
         <form id="cartForm">
             <input type="hidden" id="cartId">
-            <input type="number" id="userId" placeholder="User ID" required>
-            <input type="number" id="productId" placeholder="Product ID" required>
-            <input type="number" id="quantity" placeholder="Quantity" required>
-            <button type="submit" id="saveButton">Add to Cart</button>
-            <button type="button" id="cancelButton" class="hidden">Cancel</button>
+            <label for="userId">User ID:</label>
+            <input type="number" id="userId" placeholder="User ID" required><br>
+            <label for="productId">Product ID:</label>
+            <input type="number" id="productId" placeholder="Product ID" required><br>
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" placeholder="Quantity" required><br>
+            <button type="submit" id="saveButton">Update Cart</button>
+            <button type="button" id="cancelButton">Cancel</button>
         </form>
     </div>
+
     <script>
         $(document).ready(function () {
             loadCarts();
@@ -62,65 +170,56 @@
             // Load all cart items
             function loadCarts() {
                 $.get('/api/Cart/List', function (data) {
-                    $('#cartTable tbody').empty();
-                    data.data.forEach(function (cart) {
-                        $('#cartTable tbody').append(`
-                                            <tr>
-                                                <td>${cart.cartId}</td>
-                                                <td>${cart.userId}</td>
-                                                <td>${cart.username}</td>
-                                                <td>${cart.productId}</td>
-                                                <td>${cart.productName}</td>
-                                                <td>${cart.quantity}</td>
-                                                <td>${new Date(cart.addedAt).toLocaleString()}</td>
-                                                <td>
-                                                    <button onclick="editCart(${cart.cartId})">Edit</button>
-                                                    <button onclick="deleteCart(${cart.cartId})">Delete</button>
-                                                </td>
-                                            </tr>
-                                        `);
-                    });
+                    populateCartTable(data.data);
                 });
             }
 
-            // Add or Update Cart
-            $('#cartForm').submit(function (event) {
+            // Search cart by ID
+            $('#searchForm').submit(function (event) {
                 event.preventDefault();
-                var cart = {
-                    userId: parseInt($('#userId').val()),
-                    productId: parseInt($('#productId').val()),
-                    quantity: parseInt($('#quantity').val())
-                };
+                var id = $('#searchId').val();
+                if (!id) {
+                    loadCarts(); // Reload all carts if no ID is provided
+                    return;
+                }
 
-                $.ajax({
-                    url: '/api/Cart/Add',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(cart),
-                    success: function (response) {
-                        alert('Product added to cart successfully!');
+                $.get(`/api/Cart/Search?id=${id}`, function (data) {
+                    if (data.data) {
+                        // Display single result if found
+                        $('#cartTable tbody').empty();
+                        $('#cartTable tbody').append(createCartRow(data.data));
+                    } else {
+                        alert('Cart not found.');
                         loadCarts();
-                        resetForm();
-                    },
-                    error: function (xhr, status, error) {
-                        alert('Failed to add product to cart: ' + xhr.responseJSON.message);
                     }
                 });
             });
 
-            // Cancel Edit
-            $('#cancelButton').click(function () {
-                resetForm();
-            });
+            // Populate cart table with data
+            function populateCartTable(carts) {
+                $('#cartTable tbody').empty();
+                carts.forEach(function (cart) {
+                    $('#cartTable tbody').append(createCartRow(cart));
+                });
+            }
 
-            // Reset Form
-            function resetForm() {
-                $('#cartId').val('');
-                $('#userId').val('');
-                $('#productId').val('');
-                $('#quantity').val('');
-                $('#saveButton').text('Add to Cart');
-                $('#cancelButton').addClass('hidden');
+            // Create cart table row
+            function createCartRow(cart) {
+                return `
+                        <tr>
+                            <td>${cart.cartId}</td>
+                            <td>${cart.userId}</td>
+                            <td>${cart.username}</td>
+                            <td>${cart.productId}</td>
+                            <td>${cart.productName}</td>
+                            <td>${cart.quantity}</td>
+                            <td>${new Date(cart.addedAt).toLocaleString()}</td>
+                            <td>
+                                <button onclick="editCart(${cart.cartId})">Edit</button>
+                                <button onclick="deleteCart(${cart.cartId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
             }
 
             // Edit Cart
@@ -132,19 +231,68 @@
                         $('#userId').val(cart.userId);
                         $('#productId').val(cart.productId);
                         $('#quantity').val(cart.quantity);
-                        $('#saveButton').text('Update Cart');
-                        $('#cancelButton').removeClass('hidden');
+                        openModal();
                     }
                 }).fail(function () {
                     alert('Failed to fetch cart details.');
                 });
             };
 
+            // Open Modal
+            function openModal() {
+                $('#editModal, #modalOverlay').addClass('open');
+            }
+
+            // Close Modal
+            function closeModal() {
+                $('#editModal, #modalOverlay').removeClass('open');
+                resetForm();
+            }
+
+            // Update Cart
+            $('#cartForm').submit(function (event) {
+                event.preventDefault();
+                var cart = {
+                    cartId: parseInt($('#cartId').val()),
+                    userId: parseInt($('#userId').val()),
+                    productId: parseInt($('#productId').val()),
+                    quantity: parseInt($('#quantity').val())
+                };
+
+                $.ajax({
+                    url: '/api/Cart/Update',
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(cart),
+                    success: function (response) {
+                        alert('Cart updated successfully!');
+                        loadCarts();
+                        closeModal();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Failed to update cart: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
+
+            // Cancel Edit
+            $('#cancelButton').click(function () {
+                closeModal();
+            });
+
+            // Reset Form
+            function resetForm() {
+                $('#cartId').val('');
+                $('#userId').val('');
+                $('#productId').val('');
+                $('#quantity').val('');
+            }
+
             // Delete Cart
             window.deleteCart = function (cartId) {
                 if (confirm('Are you sure you want to delete this cart item?')) {
                     $.ajax({
-                        url: `/api/Cart/Delete/${CartID}`,
+                        url: `/api/Cart/Delete/${cartId}`,
                         type: 'DELETE',
                         success: function () {
                             loadCarts();

@@ -44,7 +44,6 @@ public class AuthController : ControllerBase
             Email = request.Email,
             Phone = request.Phone,
             Address = request.Address,
-            Role = "Customer", // Mặc định là "Customer"
             CreatedAt = DateTime.UtcNow
         };
 

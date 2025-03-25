@@ -6,6 +6,144 @@
     <title>Order Detail Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            width: 400px;
+            border-radius: 8px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .modal.open {
+            display: block;
+        }
+
+        .modal-overlay.open {
+            display: block;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .modal form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .modal form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .modal form button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+            .modal form button[type="submit"] {
+                background-color: #4CAF50;
+                color: white;
+            }
+
+            .modal form button[type="button"] {
+                background-color: #f44336;
+                color: white;
+            }
+
+        /* Search form styles */
+        #searchForm {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+            #searchForm input {
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                flex-grow: 1;
+            }
+
+            #searchForm button {
+                padding: 8px 16px;
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+        /* Table styles */
+        #orderDetailTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+            #orderDetailTable th, #orderDetailTable td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+
+            #orderDetailTable th {
+                background-color: #f2f2f2;
+            }
+
+            #orderDetailTable tr:hover {
+                background-color: #f5f5f5;
+            }
+
+            #orderDetailTable button {
+                padding: 6px 12px;
+                margin-right: 5px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+                #orderDetailTable button:first-child {
+                    background-color: #FFC107;
+                    color: black;
+                }
+
+                #orderDetailTable button:last-child {
+                    background-color: #f44336;
+                    color: white;
+                }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -23,6 +161,7 @@
         <a href="/repair-manager.html">Repair Manager</a>
         <a href="/review-manager.html">Review Manager</a>
     </div>
+
     <div class="main-content">
         <h1>Order Detail Management</h1>
 
@@ -48,41 +187,42 @@
                 <!-- Order detail rows will be populated here -->
             </tbody>
         </table>
+    </div>
 
-        <!-- Add/Edit Order Detail Form -->
+    <!-- Edit Order Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="editModal">
+        <h2>Edit Order Detail</h2>
         <form id="orderDetailForm">
             <input type="hidden" id="orderDetailId">
-            <input type="number" id="orderId" placeholder="Order ID" required>
-            <input type="number" id="productId" placeholder="Product ID" required>
-            <input type="number" id="quantity" placeholder="Quantity" min="1" required>
-            <input type="number" id="price" placeholder="Price" step="0.01" min="0.01" required>
-            <button type="submit" id="saveButton">Add Order Detail</button>
-            <button type="button" id="cancelButton" class="hidden">Cancel</button>
+            <label for="orderId">Order ID:</label>
+            <input type="number" id="orderId" required>
+
+            <label for="productId">Product ID:</label>
+            <input type="number" id="productId" required>
+
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" min="1" required>
+
+            <label for="price">Price:</label>
+            <input type="number" id="price" step="0.01" min="0.01" required>
+
+            <button type="submit">Update Order Detail</button>
+            <button type="button" id="cancelButton">Cancel</button>
         </form>
     </div>
+
     <script>
         $(document).ready(function () {
+            var modal = $('#editModal');
+            var modalOverlay = $('#modalOverlay');
+
             loadOrderDetails();
 
             // Load all order details
             function loadOrderDetails() {
                 $.get('/api/orderdetails/List', function (data) {
-                    $('#orderDetailTable tbody').empty();
-                    data.data.forEach(function (orderDetail) {
-                        $('#orderDetailTable tbody').append(`
-                                        <tr>
-                                            <td>${orderDetail.orderDetailId}</td>
-                                            <td>${orderDetail.orderId}</td>
-                                            <td>${orderDetail.productId}</td>
-                                            <td>${orderDetail.quantity}</td>
-                                            <td>${orderDetail.price}</td>
-                                            <td>
-                                                <button onclick="editOrderDetail(${orderDetail.orderDetailId})">Edit</button>
-                                                <button onclick="deleteOrderDetail(${orderDetail.orderDetailId})">Delete</button>
-                                            </td>
-                                        </tr>
-                                    `);
-                    });
+                    populateOrderDetailTable(data.data);
                 });
             }
 
@@ -96,28 +236,73 @@
                 }
 
                 $.get(`/api/orderdetails/Search/${id}`, function (data) {
-                    $('#orderDetailTable tbody').empty();
                     if (data.data) {
-                        $('#orderDetailTable tbody').append(`
-                                        <tr>
-                                            <td>${data.data.orderDetailId}</td>
-                                            <td>${data.data.orderId}</td>
-                                            <td>${data.data.productId}</td>
-                                            <td>${data.data.quantity}</td>
-                                            <td>${data.data.price}</td>
-                                            <td>
-                                                <button onclick="editOrderDetail(${data.data.orderDetailId})">Edit</button>
-                                                <button onclick="deleteOrderDetail(${data.data.orderDetailId})">Delete</button>
-                                            </td>
-                                        </tr>
-                                    `);
+                        // Display single result if found
+                        $('#orderDetailTable tbody').empty();
+                        $('#orderDetailTable tbody').append(createOrderDetailRow(data.data));
                     } else {
                         alert('Order detail not found.');
+                        loadOrderDetails();
                     }
                 });
             });
 
-            // Add or Update Order Detail
+            // Populate order detail table with data
+            function populateOrderDetailTable(orderDetails) {
+                $('#orderDetailTable tbody').empty();
+                orderDetails.forEach(function (orderDetail) {
+                    $('#orderDetailTable tbody').append(createOrderDetailRow(orderDetail));
+                });
+            }
+
+            // Create order detail table row
+            function createOrderDetailRow(orderDetail) {
+                return `
+                        <tr>
+                            <td>${orderDetail.orderDetailId}</td>
+                            <td>${orderDetail.orderId}</td>
+                            <td>${orderDetail.productId}</td>
+                            <td>${orderDetail.quantity}</td>
+                            <td>${orderDetail.price}</td>
+                            <td>
+                                <button onclick="editOrderDetail(${orderDetail.orderDetailId})">Edit</button>
+                                <button onclick="deleteOrderDetail(${orderDetail.orderDetailId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+            }
+
+            // Edit Order Detail - Show Modal
+            window.editOrderDetail = function (orderDetailId) {
+                $.get(`/api/orderdetails/Search/${orderDetailId}`, function (data) {
+                    var orderDetail = data.data;
+                    if (orderDetail) {
+                        $('#orderDetailId').val(orderDetail.orderDetailId);
+                        $('#orderId').val(orderDetail.orderId);
+                        $('#productId').val(orderDetail.productId);
+                        $('#quantity').val(orderDetail.quantity);
+                        $('#price').val(orderDetail.price);
+
+                        openModal();
+                    }
+                }).fail(function () {
+                    alert('Failed to fetch order detail details.');
+                });
+            };
+
+            // Open Modal
+            function openModal() {
+                modal.addClass('open');
+                modalOverlay.addClass('open');
+            }
+
+            // Close Modal
+            function closeModal() {
+                modal.removeClass('open');
+                modalOverlay.removeClass('open');
+            }
+
+            // Update Order Detail
             $('#orderDetailForm').submit(function (event) {
                 event.preventDefault();
                 var orderDetail = {
@@ -128,17 +313,14 @@
                     price: parseFloat($('#price').val())
                 };
 
-                var method = orderDetail.orderDetailId ? 'PUT' : 'POST';
-                var url = orderDetail.orderDetailId ? `/api/orderdetails/Update/${orderDetail.orderDetailId}` : '/api/orderdetails/Add';
-
                 $.ajax({
-                    url: url,
-                    type: method,
+                    url: `/api/orderdetails/Update/${orderDetail.orderDetailId}`,
+                    type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(orderDetail),
                     success: function () {
                         loadOrderDetails();
-                        resetForm();
+                        closeModal();
                     },
                     error: function (xhr) {
                         alert('Error: ' + xhr.responseJSON.message);
@@ -148,37 +330,8 @@
 
             // Cancel Edit
             $('#cancelButton').click(function () {
-                resetForm();
+                closeModal();
             });
-
-            // Reset Form
-            function resetForm() {
-                $('#orderDetailId').val('');
-                $('#orderId').val('');
-                $('#productId').val('');
-                $('#quantity').val('');
-                $('#price').val('');
-                $('#saveButton').text('Add Order Detail');
-                $('#cancelButton').addClass('hidden');
-            }
-
-            // Edit Order Detail
-            window.editOrderDetail = function (orderDetailId) {
-                $.get(`/api/orderdetails/Search/${orderDetailId}`, function (data) {
-                    var orderDetail = data.data;
-                    if (orderDetail) {
-                        $('#orderDetailId').val(orderDetail.orderDetailId);
-                        $('#orderId').val(orderDetail.orderId);
-                        $('#productId').val(orderDetail.productId);
-                        $('#quantity').val(orderDetail.quantity);
-                        $('#price').val(orderDetail.price);
-                        $('#saveButton').text('Update Order Detail');
-                        $('#cancelButton').removeClass('hidden');
-                    }
-                }).fail(function () {
-                    alert('Failed to fetch order detail details.');
-                });
-            };
 
             // Delete Order Detail
             window.deleteOrderDetail = function (orderDetailId) {

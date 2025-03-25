@@ -6,9 +6,78 @@
     <title>Shipping Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
-   
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            width: 300px;
+            border-radius: 8px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .modal.open {
+            display: block;
+        }
+
+        .modal-overlay.open {
+            display: block;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+        }
+
+        .modal form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .modal form input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .modal form button {
+            padding: 8px 12px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            .modal form button[type="submit"] {
+                background-color: #28a745;
+                color: white;
+            }
+
+            .modal form button[type="button"] {
+                background-color: #dc3545;
+                color: white;
+            }
+    </style>
 </head>
-<body> <!-- Sidebar -->
+<body>
+    <!-- Sidebar -->
     <div class="sidebar">
         <h2 style="color: white; text-align: center;">Navigation</h2>
         <a href="/user-manager.html">User Manager</a>
@@ -23,55 +92,94 @@
         <a href="/repair-manager.html">Repair Manager</a>
         <a href="/review-manager.html">Review Manager</a>
     </div>
- <div class="main-content">
-     <h1>Shipping Management</h1>
 
-     <!-- Search Form -->
-     <form id="searchForm">
-         <input type="number" id="searchId" placeholder="Search by Shipping ID">
-         <button type="submit">Search</button>
-     </form>
+    <div class="main-content">
+        <h1>Shipping Management</h1>
 
-     <!-- Shipping List -->
-     <table id="shippingTable">
-         <thead>
-             <tr>
-                 <th>ID</th>
-                 <th>Order ID</th>
-                 <th>Shipping Address</th>
-                 <th>Shipping Method</th>
-                 <th>Tracking Number</th>
-                 <th>Estimated Delivery Date</th>
-                 <th>Shipping Status</th>
-                 <th>Actions</th>
-             </tr>
-         </thead>
-         <tbody>
-             <!-- Shipping rows will be populated here -->
-         </tbody>
-     </table>
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="number" id="searchId" placeholder="Search by Shipping ID">
+            <button type="submit">Search</button>
+        </form>
 
-     <!-- Add/Edit Shipping Form -->
-     <form id="shippingForm">
-         <input type="hidden" id="shippingId">
-         <input type="number" id="orderId" placeholder="Order ID" required>
-         <input type="text" id="shippingAddress" placeholder="Shipping Address" required>
-         <input type="text" id="shippingMethod" placeholder="Shipping Method" required>
-         <input type="text" id="trackingNumber" placeholder="Tracking Number" required>
-         <label for="estimatedDeliveryDate">Estimated Delivery Date:</label>
-         <input type="date" id="estimatedDeliveryDate" required>
-         <select id="shippingStatus" required>
-             <option value="Delivering">Delivering</option>
-             <option value="Shipped">Shipped</option>
-             <option value="Delivered">Delivered</option>
-             <option value="Cancelled">Cancelled</option>
-         </select>
-         <button type="submit" id="saveButton">Add Shipping</button>
-         <button type="button" id="cancelButton" class="hidden">Cancel</button>
-     </form>
- </div>
+        <!-- Shipping List -->
+        <table id="shippingTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Order ID</th>
+                    <th>Shipping Address</th>
+                    <th>Shipping Method</th>
+                    <th>Tracking Number</th>
+                    <th>Estimated Delivery Date</th>
+                    <th>Shipping Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Shipping rows will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit Shipping Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Shipping</h2>
+            <form id="shippingForm">
+                <input type="hidden" id="shippingId">
+                <div>
+                    <label for="orderId">Order ID:</label>
+                    <input type="number" id="orderId" required>
+                </div>
+                <div>
+                    <label for="shippingAddress">Shipping Address:</label>
+                    <input type="text" id="shippingAddress" required>
+                </div>
+                <div>
+                    <label for="shippingMethod">Shipping Method:</label>
+                    <input type="text" id="shippingMethod" required>
+                </div>
+                <div>
+                    <label for="trackingNumber">Tracking Number:</label>
+                    <input type="text" id="trackingNumber" required>
+                </div>
+                <div>
+                    <label for="estimatedDeliveryDate">Estimated Delivery Date:</label>
+                    <input type="date" id="estimatedDeliveryDate" required>
+                </div>
+                <div>
+                    <label for="shippingStatus">Shipping Status:</label>
+                    <select id="shippingStatus" required>
+                        <option value="Delivering">Delivering</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <button type="submit">Update Shipping</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         $(document).ready(function () {
+            var modal = document.getElementById("editModal");
+            var span = document.getElementsByClassName("close")[0];
+
+            // When the user clicks on <span> (x), close the modal
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
             loadShippings();
 
             // Load all shipping records
@@ -131,7 +239,7 @@
                 });
             });
 
-            // Add or Update Shipping
+            // Update Shipping
             $('#shippingForm').submit(function (event) {
                 event.preventDefault();
                 var shipping = {
@@ -144,17 +252,14 @@
                     shippingStatus: $('#shippingStatus').val()
                 };
 
-                var method = shipping.shippingId ? 'PUT' : 'POST';
-                var url = shipping.shippingId ? `/api/shipping/Update/${shipping.shippingId}` : '/api/shipping/Add';
-
                 $.ajax({
-                    url: url,
-                    type: method,
+                    url: `/api/shipping/Update/${shipping.shippingId}`,
+                    type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(shipping),
                     success: function () {
                         loadShippings();
-                        resetForm();
+                        modal.style.display = "none";
                     },
                     error: function (xhr) {
                         alert('Error: ' + xhr.responseJSON.message);
@@ -162,25 +267,7 @@
                 });
             });
 
-            // Cancel Edit
-            $('#cancelButton').click(function () {
-                resetForm();
-            });
-
-            // Reset Form
-            function resetForm() {
-                $('#shippingId').val('');
-                $('#orderId').val('');
-                $('#shippingAddress').val('');
-                $('#shippingMethod').val('');
-                $('#trackingNumber').val('');
-                $('#estimatedDeliveryDate').val('');
-                $('#shippingStatus').val('Delivering');
-                $('#saveButton').text('Add Shipping');
-                $('#cancelButton').addClass('hidden');
-            }
-
-            // Edit Shipping
+            // Edit Shipping - Show Modal
             window.editShipping = function (shippingId) {
                 $.get(`/api/shipping/Search/${shippingId}`, function (data) {
                     var shipping = data.data;
@@ -192,8 +279,8 @@
                         $('#trackingNumber').val(shipping.trackingNumber);
                         $('#estimatedDeliveryDate').val(new Date(shipping.estimatedDeliveryDate).toISOString().split('T')[0]);
                         $('#shippingStatus').val(shipping.shippingStatus);
-                        $('#saveButton').text('Update Shipping');
-                        $('#cancelButton').removeClass('hidden');
+
+                        modal.style.display = "block";
                     }
                 }).fail(function () {
                     alert('Failed to fetch shipping details.');

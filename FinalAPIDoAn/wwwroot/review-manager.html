@@ -6,7 +6,53 @@
     <title>Review Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
-   
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+            .close:hover {
+                color: black;
+            }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -49,20 +95,53 @@
                 <!-- Review rows will be populated here -->
             </tbody>
         </table>
-
-        <!-- Add Review Form -->
-        <form id="reviewForm">
-            <input type="hidden" id="reviewId">
-            <input type="number" id="productId" placeholder="Product ID" required>
-            <input type="number" id="userId" placeholder="User ID" required>
-            <input type="number" id="rating" placeholder="Rating (1-5)" min="1" max="5" required>
-            <textarea id="comment" placeholder="Comment" required></textarea>
-            <button type="submit" id="saveButton">Add Review</button>
-            <button type="button" id="cancelButton" class="hidden">Cancel</button>
-        </form>
     </div>
+
+    <!-- Edit Review Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Review</h2>
+            <form id="reviewForm">
+                <input type="hidden" id="reviewId">
+                <div class="form-group">
+                    <label for="productId">Product ID:</label>
+                    <input type="number" id="productId" required>
+                </div>
+                <div class="form-group">
+                    <label for="userId">User ID:</label>
+                    <input type="number" id="userId" required>
+                </div>
+                <div class="form-group">
+                    <label for="rating">Rating (1-5):</label>
+                    <input type="number" id="rating" min="1" max="5" required>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comment:</label>
+                    <textarea id="comment" required></textarea>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+
     <script>
         $(document).ready(function () {
+            var modal = document.getElementById("editModal");
+            var span = document.getElementsByClassName("close")[0];
+
+            // When the user clicks on <span> (x), close the modal
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
             loadReviews();
 
             // Load all reviews
@@ -71,17 +150,18 @@
                     $('#reviewTable tbody').empty();
                     data.data.forEach(function (review) {
                         $('#reviewTable tbody').append(`
-                                    <tr>
-                                        <td>${review.reviewId}</td>
-                                        <td>${review.productId}</td>
-                                        <td>${review.userId}</td>
-                                        <td>${review.rating}</td>
-                                        <td>${review.comment}</td>
-                                        <td>
-                                            <button onclick="deleteReview(${review.reviewId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                <tr>
+                                    <td>${review.reviewId}</td>
+                                    <td>${review.productId}</td>
+                                    <td>${review.userId}</td>
+                                    <td>${review.rating}</td>
+                                    <td>${review.comment}</td>
+                                    <td>
+                                        
+                                        <button onclick="deleteReview(${review.reviewId})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
                     });
                 });
             }
@@ -99,27 +179,29 @@
                     $('#reviewTable tbody').empty();
                     if (data.data) {
                         $('#reviewTable tbody').append(`
-                                    <tr>
-                                        <td>${data.data.reviewId}</td>
-                                        <td>${data.data.productId}</td>
-                                        <td>${data.data.userId}</td>
-                                        <td>${data.data.rating}</td>
-                                        <td>${data.data.comment}</td>
-                                        <td>
-                                            <button onclick="deleteReview(${data.data.reviewId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                <tr>
+                                    <td>${data.data.reviewId}</td>
+                                    <td>${data.data.productId}</td>
+                                    <td>${data.data.userId}</td>
+                                    <td>${data.data.rating}</td>
+                                    <td>${data.data.comment}</td>
+                                    <td>
+                                        <button onclick="editReview(${data.data.reviewId})">Edit</button>
+                                        <button onclick="deleteReview(${data.data.reviewId})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
                     } else {
                         alert('Review not found.');
                     }
                 });
             });
 
-            // Add Review
+            // Update Review
             $('#reviewForm').submit(function (event) {
                 event.preventDefault();
                 var review = {
+                    reviewId: $('#reviewId').val(),
                     productId: parseInt($('#productId').val()),
                     userId: parseInt($('#userId').val()),
                     rating: parseInt($('#rating').val()),
@@ -127,35 +209,19 @@
                 };
 
                 $.ajax({
-                    url: '/api/reviews/Add',
-                    type: 'POST',
+                    url: `/api/reviews/Update/${review.reviewId}`,
+                    type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify(review),
                     success: function () {
                         loadReviews();
-                        resetForm();
+                        modal.style.display = "none";
                     },
                     error: function (xhr) {
                         alert('Error: ' + xhr.responseJSON.message);
                     }
                 });
             });
-
-            // Cancel Edit
-            $('#cancelButton').click(function () {
-                resetForm();
-            });
-
-            // Reset Form
-            function resetForm() {
-                $('#reviewId').val('');
-                $('#productId').val('');
-                $('#userId').val('');
-                $('#rating').val('');
-                $('#comment').val('');
-                $('#saveButton').text('Add Review');
-                $('#cancelButton').addClass('hidden');
-            }
 
             // Delete Review
             window.deleteReview = function (reviewId) {
