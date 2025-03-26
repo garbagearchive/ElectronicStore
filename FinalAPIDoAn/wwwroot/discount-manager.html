@@ -6,6 +6,51 @@
     <title>Discount Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -37,11 +82,47 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Code</th>
+                    <th>
+                        Code
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('discountCode')">▼</button>
+                            <div id="discountCode-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('discountCode', 'asc')">A → Z</a>
+                                <a onclick="sortTable('discountCode', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Description</th>
-                    <th>Percentage</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
+                    <th>
+                        Percentage
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('discountPercentage')">▼</button>
+                            <div id="discountPercentage-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('discountPercentage', 'asc')">Low to High</a>
+                                <a onclick="sortTable('discountPercentage', 'desc')">High to Low</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Start Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('startDate')">▼</button>
+                            <div id="startDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('startDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('startDate', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        End Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('endDate')">▼</button>
+                            <div id="endDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('endDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('endDate', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Active</th>
                     <th>Actions</th>
                 </tr>
@@ -74,24 +155,29 @@
             // Load all discounts
             function loadDiscounts() {
                 $.get('/api/discounts/List', function (data) {
-                    $('#discountTable tbody').empty();
-                    data.data.forEach(function (discount) {
-                        $('#discountTable tbody').append(`
-                                    <tr>
-                                        <td>${discount.discountId}</td>
-                                        <td>${discount.discountCode}</td>
-                                        <td>${discount.description}</td>
-                                        <td>${discount.discountPercentage}%</td>
-                                        <td>${new Date(discount.startDate).toLocaleString()}</td>
-                                        <td>${new Date(discount.endDate).toLocaleString()}</td>
-                                        <td>${discount.isActive ? 'Yes' : 'No'}</td>
-                                        <td>
-                                            <button onclick="editDiscount(${discount.discountId})">Edit</button>
-                                            <button onclick="deleteDiscount(${discount.discountId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
-                    });
+                    populateDiscountTable(data.data);
+                });
+            }
+
+            // Populate discount table with data
+            function populateDiscountTable(discounts) {
+                $('#discountTable tbody').empty();
+                discounts.forEach(function (discount) {
+                    $('#discountTable tbody').append(`
+                            <tr>
+                                <td>${discount.discountId}</td>
+                                <td>${discount.discountCode}</td>
+                                <td>${discount.description}</td>
+                                <td>${discount.discountPercentage}%</td>
+                                <td>${new Date(discount.startDate).toLocaleString()}</td>
+                                <td>${new Date(discount.endDate).toLocaleString()}</td>
+                                <td>${discount.isActive ? 'Yes' : 'No'}</td>
+                                <td>
+                                    <button onclick="editDiscount(${discount.discountId})">Edit</button>
+                                    <button onclick="deleteDiscount(${discount.discountId})">Delete</button>
+                                </td>
+                            </tr>
+                        `);
                 });
             }
 
@@ -108,20 +194,20 @@
                     $('#discountTable tbody').empty();
                     if (data.data) {
                         $('#discountTable tbody').append(`
-                                    <tr>
-                                        <td>${data.data.discountId}</td>
-                                        <td>${data.data.discountCode}</td>
-                                        <td>${data.data.description}</td>
-                                        <td>${data.data.discountPercentage}%</td>
-                                        <td>${new Date(data.data.startDate).toLocaleString()}</td>
-                                        <td>${new Date(data.data.endDate).toLocaleString()}</td>
-                                        <td>${data.data.isActive ? 'Yes' : 'No'}</td>
-                                        <td>
-                                            <button onclick="editDiscount(${data.data.discountId})">Edit</button>
-                                            <button onclick="deleteDiscount(${data.data.discountId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                                <tr>
+                                    <td>${data.data.discountId}</td>
+                                    <td>${data.data.discountCode}</td>
+                                    <td>${data.data.description}</td>
+                                    <td>${data.data.discountPercentage}%</td>
+                                    <td>${new Date(data.data.startDate).toLocaleString()}</td>
+                                    <td>${new Date(data.data.endDate).toLocaleString()}</td>
+                                    <td>${data.data.isActive ? 'Yes' : 'No'}</td>
+                                    <td>
+                                        <button onclick="editDiscount(${data.data.discountId})">Edit</button>
+                                        <button onclick="deleteDiscount(${data.data.discountId})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
                     } else {
                         alert('Discount not found.');
                     }
@@ -210,6 +296,61 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#discountTable tbody tr').get();
+
+            rows.sort(function (a, b) {
+                let valA, valB;
+
+                // Get the values based on column
+                if (column === 'discountCode') {
+                    valA = $(a).find('td:nth-child(2)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(2)').text().toLowerCase();
+                    return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                else if (column === 'discountPercentage') {
+                    valA = parseInt($(a).find('td:nth-child(4)').text());
+                    valB = parseInt($(b).find('td:nth-child(4)').text());
+                    return direction === 'asc' ? valA - valB : valB - valA;
+                }
+                else if (column === 'startDate' || column === 'endDate') {
+                    const colIndex = column === 'startDate' ? 5 : 6;
+                    valA = new Date($(a).find(`td:nth-child(${colIndex})`).text());
+                    valB = new Date($(b).find(`td:nth-child(${colIndex})`).text());
+                    return direction === 'asc' ? valA - valB : valB - valA;
+                }
+                return 0;
+            });
+
+            $('#discountTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

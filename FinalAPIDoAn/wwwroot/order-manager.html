@@ -122,6 +122,7 @@
 
             #orderTable th {
                 background-color: #f2f2f2;
+                position: relative;
             }
 
             #orderTable tr:hover {
@@ -145,6 +146,98 @@
                     background-color: #f44336;
                     color: white;
                 }
+
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        /* Status colors */
+        .status-pending {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .status-processing {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .status-completed {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-cancelled {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .status-unpaid {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .status-paid {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-refunded {
+            color: #9E9E9E;
+            font-weight: bold;
+        }
+
+        .status-not-shipped {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .status-shipped {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .status-delivered {
+            color: #4CAF50;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -179,11 +272,54 @@
                 <tr>
                     <th>ID</th>
                     <th>User ID</th>
-                    <th>Order Date</th>
+                    <th>
+                        Order Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('orderDate')">▼</button>
+                            <div id="orderDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('orderDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('orderDate', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Total Amount</th>
-                    <th>Order Status</th>
-                    <th>Payment Status</th>
-                    <th>Shipping Status</th>
+                    <th>
+                        Order Status
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('orderStatus')">▼</button>
+                            <div id="orderStatus-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('orderStatus', 'pending')">Pending</a>
+                                <a onclick="sortTable('orderStatus', 'processing')">Processing</a>
+                                <a onclick="sortTable('orderStatus', 'completed')">Completed</a>
+                                <a onclick="sortTable('orderStatus', 'cancelled')">Cancelled</a>
+                                <a onclick="sortTable('orderStatus', 'all')">Show All</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Payment Status
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('paymentStatus')">▼</button>
+                            <div id="paymentStatus-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('paymentStatus', 'unpaid')">Unpaid</a>
+                                <a onclick="sortTable('paymentStatus', 'paid')">Paid</a>
+                                <a onclick="sortTable('paymentStatus', 'refunded')">Refunded</a>
+                                <a onclick="sortTable('paymentStatus', 'all')">Show All</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Shipping Status
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('shippingStatus')">▼</button>
+                            <div id="shippingStatus-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('shippingStatus', 'not shipped')">Not Shipped</a>
+                                <a onclick="sortTable('shippingStatus', 'shipped')">Shipped</a>
+                                <a onclick="sortTable('shippingStatus', 'delivered')">Delivered</a>
+                                <a onclick="sortTable('shippingStatus', 'all')">Show All</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -240,6 +376,11 @@
         $(document).ready(function () {
             var modal = $('#editModal');
             var modalOverlay = $('#modalOverlay');
+            var currentStatusFilter = {
+                orderStatus: 'all',
+                paymentStatus: 'all',
+                shippingStatus: 'all'
+            };
 
             loadOrders();
 
@@ -281,21 +422,26 @@
 
             // Create order table row
             function createOrderRow(order) {
+                // Apply status classes
+                const orderStatusClass = `status-${order.orderStatus.toLowerCase().replace(' ', '-')}`;
+                const paymentStatusClass = `status-${order.paymentStatus.toLowerCase().replace(' ', '-')}`;
+                const shippingStatusClass = `status-${order.shippingStatus.toLowerCase().replace(' ', '-')}`;
+
                 return `
-                        <tr>
-                            <td>${order.orderId}</td>
-                            <td>${order.userId}</td>
-                            <td>${new Date(order.orderDate).toLocaleString()}</td>
-                            <td>${order.totalAmount}</td>
-                            <td>${order.orderStatus}</td>
-                            <td>${order.paymentStatus}</td>
-                            <td>${order.shippingStatus}</td>
-                            <td>
-                                <button onclick="editOrder(${order.orderId})">Edit</button>
-                                <button onclick="deleteOrder(${order.orderId})">Delete</button>
-                            </td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td>${order.orderId}</td>
+                                <td>${order.userId}</td>
+                                <td>${new Date(order.orderDate).toLocaleString()}</td>
+                                <td>${order.totalAmount}</td>
+                                <td class="${orderStatusClass}">${order.orderStatus}</td>
+                                <td class="${paymentStatusClass}">${order.paymentStatus}</td>
+                                <td class="${shippingStatusClass}">${order.shippingStatus}</td>
+                                <td>
+                                    <button onclick="editOrder(${order.orderId})">Edit</button>
+                                    <button onclick="deleteOrder(${order.orderId})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
             }
 
             // Edit Order - Show Modal
@@ -376,6 +522,66 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#orderTable tbody tr').get();
+
+            if (column === 'orderDate') {
+                // Sort by date
+                rows.sort(function (a, b) {
+                    const dateA = new Date($(a).find('td:nth-child(3)').text());
+                    const dateB = new Date($(b).find('td:nth-child(3)').text());
+                    return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            } else {
+                // Filter by status
+                currentStatusFilter[column] = direction;
+
+                // First filter the rows
+                rows = rows.filter(row => {
+                    const statusMatch = (filter, actual) => {
+                        if (filter === 'all') return true;
+                        return actual.toLowerCase().includes(filter.toLowerCase());
+                    };
+
+                    const orderStatus = $(row).find('td:nth-child(5)').text();
+                    const paymentStatus = $(row).find('td:nth-child(6)').text();
+                    const shippingStatus = $(row).find('td:nth-child(7)').text();
+
+                    return statusMatch(currentStatusFilter.orderStatus, orderStatus) &&
+                        statusMatch(currentStatusFilter.paymentStatus, paymentStatus) &&
+                        statusMatch(currentStatusFilter.shippingStatus, shippingStatus);
+                });
+            }
+
+            $('#orderTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

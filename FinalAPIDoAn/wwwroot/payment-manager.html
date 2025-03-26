@@ -48,9 +48,65 @@
         }
 
         input, select {
-            
             padding: 8px;
             margin-bottom: 10px;
+        }
+
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        /* Status colors */
+        .status-pending {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .status-completed {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-failed {
+            color: #f44336;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -85,10 +141,39 @@
                 <tr>
                     <th>ID</th>
                     <th>Order ID</th>
-                    <th>Payment Date</th>
-                    <th>Payment Method</th>
+                    <th>
+                        Payment Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('paymentDate')">▼</button>
+                            <div id="paymentDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('paymentDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('paymentDate', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Payment Method
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('paymentMethod')">▼</button>
+                            <div id="paymentMethod-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('paymentMethod', 'asc')">A → Z</a>
+                                <a onclick="sortTable('paymentMethod', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Amount</th>
-                    <th>Payment Status</th>
+                    <th>
+                        Payment Status
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('paymentStatus')">▼</button>
+                            <div id="paymentStatus-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('paymentStatus', 'pending')">Pending</a>
+                                <a onclick="sortTable('paymentStatus', 'completed')">Completed</a>
+                                <a onclick="sortTable('paymentStatus', 'failed')">Failed</a>
+                                <a onclick="sortTable('paymentStatus', 'all')">Show All</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -138,6 +223,7 @@
         $(document).ready(function () {
             var modal = document.getElementById("editModal");
             var span = document.getElementsByClassName("close")[0];
+            var currentStatusFilter = 'all';
 
             // When the user clicks on <span> (x), close the modal
             span.onclick = function () {
@@ -156,24 +242,35 @@
             // Load all payments
             function loadPayments() {
                 $.get('/api/payments/List', function (data) {
-                    $('#paymentTable tbody').empty();
-                    data.data.forEach(function (payment) {
-                        $('#paymentTable tbody').append(`
-                                <tr>
-                                    <td>${payment.paymentId}</td>
-                                    <td>${payment.orderId}</td>
-                                    <td>${new Date(payment.paymentDate).toLocaleString()}</td>
-                                    <td>${payment.paymentMethod}</td>
-                                    <td>${payment.amount}</td>
-                                    <td>${payment.paymentStatus}</td>
-                                    <td>
-                                        <button onclick="editPayment(${payment.paymentId})">Edit</button>
-                                        <button onclick="deletePayment(${payment.paymentId})">Delete</button>
-                                    </td>
-                                </tr>
-                            `);
-                    });
+                    populatePaymentTable(data.data);
                 });
+            }
+
+            // Populate payment table with data
+            function populatePaymentTable(payments) {
+                $('#paymentTable tbody').empty();
+                payments.forEach(function (payment) {
+                    $('#paymentTable tbody').append(createPaymentRow(payment));
+                });
+            }
+
+            // Create payment table row
+            function createPaymentRow(payment) {
+                const statusClass = `status-${payment.paymentStatus.toLowerCase()}`;
+                return `
+                        <tr>
+                            <td>${payment.paymentId}</td>
+                            <td>${payment.orderId}</td>
+                            <td>${new Date(payment.paymentDate).toLocaleString()}</td>
+                            <td>${payment.paymentMethod}</td>
+                            <td>${payment.amount}</td>
+                            <td class="${statusClass}">${payment.paymentStatus}</td>
+                            <td>
+                                <button onclick="editPayment(${payment.paymentId})">Edit</button>
+                                <button onclick="deletePayment(${payment.paymentId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
             }
 
             // Search payment by ID
@@ -188,20 +285,7 @@
                 $.get(`/api/payments/Search/${id}`, function (data) {
                     $('#paymentTable tbody').empty();
                     if (data.data) {
-                        $('#paymentTable tbody').append(`
-                                <tr>
-                                    <td>${data.data.paymentId}</td>
-                                    <td>${data.data.orderId}</td>
-                                    <td>${new Date(data.data.paymentDate).toLocaleString()}</td>
-                                    <td>${data.data.paymentMethod}</td>
-                                    <td>${data.data.amount}</td>
-                                    <td>${data.data.paymentStatus}</td>
-                                    <td>
-                                        <button onclick="editPayment(${data.data.paymentId})">Edit</button>
-                                        <button onclick="deletePayment(${data.data.paymentId})">Delete</button>
-                                    </td>
-                                </tr>
-                            `);
+                        $('#paymentTable tbody').append(createPaymentRow(data.data));
                     } else {
                         alert('Payment not found.');
                     }
@@ -267,6 +351,65 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#paymentTable tbody tr').get();
+
+            if (column === 'paymentDate') {
+                // Sort by date
+                rows.sort(function (a, b) {
+                    const dateA = new Date($(a).find('td:nth-child(3)').text());
+                    const dateB = new Date($(b).find('td:nth-child(3)').text());
+                    return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            }
+            else if (column === 'paymentMethod') {
+                // Sort by payment method
+                rows.sort(function (a, b) {
+                    const methodA = $(a).find('td:nth-child(4)').text().toLowerCase();
+                    const methodB = $(b).find('td:nth-child(4)').text().toLowerCase();
+                    return direction === 'asc' ? methodA.localeCompare(methodB) : methodB.localeCompare(methodA);
+                });
+            }
+            else if (column === 'paymentStatus') {
+                // Filter by payment status
+                currentStatusFilter = direction;
+                if (direction !== 'all') {
+                    rows = rows.filter(row => {
+                        const status = $(row).find('td:nth-child(6)').text().toLowerCase();
+                        return status.includes(direction.toLowerCase());
+                    });
+                }
+            }
+
+            $('#paymentTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

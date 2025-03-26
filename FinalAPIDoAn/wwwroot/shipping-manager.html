@@ -74,6 +74,68 @@
                 background-color: #dc3545;
                 color: white;
             }
+
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        /* Status colors */
+        .status-delivering {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .status-shipped {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .status-delivered {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-cancelled {
+            color: #f44336;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -109,10 +171,40 @@
                     <th>ID</th>
                     <th>Order ID</th>
                     <th>Shipping Address</th>
-                    <th>Shipping Method</th>
+                    <th>
+                        Shipping Method
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('shippingMethod')">▼</button>
+                            <div id="shippingMethod-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('shippingMethod', 'asc')">A → Z</a>
+                                <a onclick="sortTable('shippingMethod', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Tracking Number</th>
-                    <th>Estimated Delivery Date</th>
-                    <th>Shipping Status</th>
+                    <th>
+                        Estimated Delivery Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('estimatedDeliveryDate')">▼</button>
+                            <div id="estimatedDeliveryDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('estimatedDeliveryDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('estimatedDeliveryDate', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Shipping Status
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('shippingStatus')">▼</button>
+                            <div id="shippingStatus-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('shippingStatus', 'delivering')">Delivering</a>
+                                <a onclick="sortTable('shippingStatus', 'shipped')">Shipped</a>
+                                <a onclick="sortTable('shippingStatus', 'delivered')">Delivered</a>
+                                <a onclick="sortTable('shippingStatus', 'cancelled')">Cancelled</a>
+                                <a onclick="sortTable('shippingStatus', 'all')">Show All</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -167,6 +259,7 @@
         $(document).ready(function () {
             var modal = document.getElementById("editModal");
             var span = document.getElementsByClassName("close")[0];
+            var currentStatusFilter = 'all';
 
             // When the user clicks on <span> (x), close the modal
             span.onclick = function () {
@@ -185,25 +278,36 @@
             // Load all shipping records
             function loadShippings() {
                 $.get('/api/shipping/List', function (data) {
-                    $('#shippingTable tbody').empty();
-                    data.data.forEach(function (shipping) {
-                        $('#shippingTable tbody').append(`
-                                <tr>
-                                    <td>${shipping.shippingId}</td>
-                                    <td>${shipping.orderId}</td>
-                                    <td>${shipping.shippingAddress}</td>
-                                    <td>${shipping.shippingMethod}</td>
-                                    <td>${shipping.trackingNumber}</td>
-                                    <td>${new Date(shipping.estimatedDeliveryDate).toLocaleDateString()}</td>
-                                    <td>${shipping.shippingStatus}</td>
-                                    <td>
-                                        <button onclick="editShipping(${shipping.shippingId})">Edit</button>
-                                        <button onclick="deleteShipping(${shipping.shippingId})">Delete</button>
-                                    </td>
-                                </tr>
-                            `);
-                    });
+                    populateShippingTable(data.data);
                 });
+            }
+
+            // Populate shipping table with data
+            function populateShippingTable(shippings) {
+                $('#shippingTable tbody').empty();
+                shippings.forEach(function (shipping) {
+                    $('#shippingTable tbody').append(createShippingRow(shipping));
+                });
+            }
+
+            // Create shipping table row
+            function createShippingRow(shipping) {
+                const statusClass = `status-${shipping.shippingStatus.toLowerCase()}`;
+                return `
+                        <tr>
+                            <td>${shipping.shippingId}</td>
+                            <td>${shipping.orderId}</td>
+                            <td>${shipping.shippingAddress}</td>
+                            <td>${shipping.shippingMethod}</td>
+                            <td>${shipping.trackingNumber}</td>
+                            <td>${new Date(shipping.estimatedDeliveryDate).toLocaleDateString()}</td>
+                            <td class="${statusClass}">${shipping.shippingStatus}</td>
+                            <td>
+                                <button onclick="editShipping(${shipping.shippingId})">Edit</button>
+                                <button onclick="deleteShipping(${shipping.shippingId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
             }
 
             // Search shipping by ID
@@ -216,25 +320,13 @@
                 }
 
                 $.get(`/api/shipping/Search/${id}`, function (data) {
-                    $('#shippingTable tbody').empty();
                     if (data.data) {
-                        $('#shippingTable tbody').append(`
-                                <tr>
-                                    <td>${data.data.shippingId}</td>
-                                    <td>${data.data.orderId}</td>
-                                    <td>${data.data.shippingAddress}</td>
-                                    <td>${data.data.shippingMethod}</td>
-                                    <td>${data.data.trackingNumber}</td>
-                                    <td>${new Date(data.data.estimatedDeliveryDate).toLocaleDateString()}</td>
-                                    <td>${data.data.shippingStatus}</td>
-                                    <td>
-                                        <button onclick="editShipping(${data.data.shippingId})">Edit</button>
-                                        <button onclick="deleteShipping(${data.data.shippingId})">Delete</button>
-                                    </td>
-                                </tr>
-                            `);
+                        // Display single result if found
+                        $('#shippingTable tbody').empty();
+                        $('#shippingTable tbody').append(createShippingRow(data.data));
                     } else {
                         alert('Shipping not found.');
+                        loadShippings();
                     }
                 });
             });
@@ -300,6 +392,65 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#shippingTable tbody tr').get();
+
+            if (column === 'shippingMethod') {
+                // Sort by shipping method
+                rows.sort(function (a, b) {
+                    const methodA = $(a).find('td:nth-child(4)').text().toLowerCase();
+                    const methodB = $(b).find('td:nth-child(4)').text().toLowerCase();
+                    return direction === 'asc' ? methodA.localeCompare(methodB) : methodB.localeCompare(methodA);
+                });
+            }
+            else if (column === 'estimatedDeliveryDate') {
+                // Sort by estimated delivery date
+                rows.sort(function (a, b) {
+                    const dateA = new Date($(a).find('td:nth-child(6)').text());
+                    const dateB = new Date($(b).find('td:nth-child(6)').text());
+                    return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            }
+            else if (column === 'shippingStatus') {
+                // Filter by shipping status
+                currentStatusFilter = direction;
+                if (direction !== 'all') {
+                    rows = rows.filter(row => {
+                        const status = $(row).find('td:nth-child(7)').text().toLowerCase();
+                        return status.includes(direction.toLowerCase());
+                    });
+                }
+            }
+
+            $('#shippingTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

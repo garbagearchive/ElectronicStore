@@ -51,7 +51,9 @@ namespace FinalAPIDoAn.Controllers
                 ProductId = reviewDto.ProductId,
                 UserId = reviewDto.UserId,
                 Rating = reviewDto.Rating,
-                Comment = reviewDto.Comment
+                Comment = reviewDto.Comment,
+                ReviewImages = reviewDto.ReviewImages,
+                ReviewDate = DateTime.Now // Using server time instead of client time
             };
 
             _dbc.ProductReviews.Add(review);
@@ -86,5 +88,7 @@ namespace FinalAPIDoAn.Controllers
 
         [Required]
         public string Comment { get; set; }
+
+        public string ReviewImages { get; set; } // Added this field
     }
 }

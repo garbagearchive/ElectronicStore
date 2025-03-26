@@ -98,6 +98,46 @@
                 border-radius: 4px;
                 cursor: pointer;
             }
+
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -132,11 +172,38 @@
                 <tr>
                     <th>Cart ID</th>
                     <th>User ID</th>
-                    <th>Username</th>
+                    <th>
+                        Username
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('username')">▼</button>
+                            <div id="username-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('username', 'asc')">A → Z</a>
+                                <a onclick="sortTable('username', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Product ID</th>
-                    <th>Product Name</th>
+                    <th>
+                        Product Name
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('productName')">▼</button>
+                            <div id="productName-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('productName', 'asc')">A → Z</a>
+                                <a onclick="sortTable('productName', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Quantity</th>
-                    <th>Added At</th>
+                    <th>
+                        Added At
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('addedAt')">▼</button>
+                            <div id="addedAt-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('addedAt', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('addedAt', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -206,20 +273,20 @@
             // Create cart table row
             function createCartRow(cart) {
                 return `
-                        <tr>
-                            <td>${cart.cartId}</td>
-                            <td>${cart.userId}</td>
-                            <td>${cart.username}</td>
-                            <td>${cart.productId}</td>
-                            <td>${cart.productName}</td>
-                            <td>${cart.quantity}</td>
-                            <td>${new Date(cart.addedAt).toLocaleString()}</td>
-                            <td>
-                                <button onclick="editCart(${cart.cartId})">Edit</button>
-                                <button onclick="deleteCart(${cart.cartId})">Delete</button>
-                            </td>
-                        </tr>
-                    `;
+                            <tr>
+                                <td>${cart.cartId}</td>
+                                <td>${cart.userId}</td>
+                                <td>${cart.username}</td>
+                                <td>${cart.productId}</td>
+                                <td>${cart.productName}</td>
+                                <td>${cart.quantity}</td>
+                                <td>${new Date(cart.addedAt).toLocaleString()}</td>
+                                <td>
+                                    <button onclick="editCart(${cart.cartId})">Edit</button>
+                                    <button onclick="deleteCart(${cart.cartId})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
             }
 
             // Edit Cart
@@ -301,6 +368,70 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#cartTable tbody tr').get();
+
+            rows.sort(function (a, b) {
+                let valA, valB;
+
+                // Get the values based on column
+                if (column === 'username') {
+                    valA = $(a).find('td:nth-child(3)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(3)').text().toLowerCase();
+                } else if (column === 'productName') {
+                    valA = $(a).find('td:nth-child(5)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(5)').text().toLowerCase();
+                } else if (column === 'addedAt') {
+                    // For date sorting, we need to parse the date strings
+                    valA = new Date($(a).find('td:nth-child(7)').text());
+                    valB = new Date($(b).find('td:nth-child(7)').text());
+                }
+
+                // Determine sort order
+                if (direction === 'asc') {
+                    if (column === 'addedAt') {
+                        return valA - valB; // For dates, ascending means older first
+                    } else {
+                        return valA.localeCompare(valB);
+                    }
+                } else {
+                    if (column === 'addedAt') {
+                        return valB - valA; // For dates, descending means newer first
+                    } else {
+                        return valB.localeCompare(valA);
+                    }
+                }
+            });
+
+            $('#cartTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

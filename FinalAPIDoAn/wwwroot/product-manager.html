@@ -6,6 +6,51 @@
     <title>Product Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -37,10 +82,46 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Price</th>
-                    <th>Stock</th>
+                    <th>
+                        Name
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('productName')">▼</button>
+                            <div id="productName-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('productName', 'asc')">A → Z</a>
+                                <a onclick="sortTable('productName', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Description
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('description')">▼</button>
+                            <div id="description-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('description', 'asc')">A → Z</a>
+                                <a onclick="sortTable('description', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Price
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('price')">▼</button>
+                            <div id="price-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('price', 'asc')">Low to High</a>
+                                <a onclick="sortTable('price', 'desc')">High to Low</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Stock
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('stockQuantity')">▼</button>
+                            <div id="stockQuantity-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('stockQuantity', 'asc')">Low to High</a>
+                                <a onclick="sortTable('stockQuantity', 'desc')">High to Low</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Category ID</th>
                     <th>Image URL</th>
                     <th>Actions</th>
@@ -71,24 +152,29 @@
             // Load all products
             function loadProducts() {
                 $.get('/api/products/List', function (data) {
-                    $('#productTable tbody').empty();
-                    data.data.forEach(function (product) {
-                        $('#productTable tbody').append(`
-                                        <tr>
-                                            <td>${product.productId}</td>
-                                            <td>${product.productName}</td>
-                                            <td>${product.description}</td>
-                                            <td>${product.price}</td>
-                                            <td>${product.stockQuantity}</td>
-                                            <td>${product.categoryId}</td>
-                                            <td>${product.imageUrl}</td>
-                                            <td>
-                                                <button onclick="editProduct(${product.productId})">Edit</button>
-                                                <button onclick="deleteProduct(${product.productId})">Delete</button>
-                                            </td>
-                                        </tr>
-                                    `);
-                    });
+                    populateProductTable(data.data);
+                });
+            }
+
+            // Populate product table with data
+            function populateProductTable(products) {
+                $('#productTable tbody').empty();
+                products.forEach(function (product) {
+                    $('#productTable tbody').append(`
+                            <tr>
+                                <td>${product.productId}</td>
+                                <td>${product.productName}</td>
+                                <td>${product.description}</td>
+                                <td>${product.price}</td>
+                                <td>${product.stockQuantity}</td>
+                                <td>${product.categoryId}</td>
+                                <td>${product.imageUrl}</td>
+                                <td>
+                                    <button onclick="editProduct(${product.productId})">Edit</button>
+                                    <button onclick="deleteProduct(${product.productId})">Delete</button>
+                                </td>
+                            </tr>
+                        `);
                 });
             }
 
@@ -97,24 +183,7 @@
                 event.preventDefault();
                 var keyword = $('#searchKeyword').val();
                 $.get('/api/products/Search', { keyword: keyword }, function (data) {
-                    $('#productTable tbody').empty();
-                    data.data.forEach(function (product) {
-                        $('#productTable tbody').append(`
-                                        <tr>
-                                            <td>${product.productId}</td>
-                                            <td>${product.productName}</td>
-                                            <td>${product.description}</td>
-                                            <td>${product.price}</td>
-                                            <td>${product.stockQuantity}</td>
-                                            <td>${product.categoryId}</td>
-                                            <td>${product.imageUrl}</td>
-                                            <td>
-                                                <button onclick="editProduct(${product.productId})">Edit</button>
-                                                <button onclick="deleteProduct(${product.productId})">Delete</button>
-                                            </td>
-                                        </tr>
-                                    `);
-                    });
+                    populateProductTable(data.data);
                 });
             });
 
@@ -197,6 +266,65 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#productTable tbody tr').get();
+
+            rows.sort(function (a, b) {
+                let valA, valB;
+
+                // Get the values based on column
+                if (column === 'productName') {
+                    valA = $(a).find('td:nth-child(2)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(2)').text().toLowerCase();
+                    return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                else if (column === 'description') {
+                    valA = $(a).find('td:nth-child(3)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(3)').text().toLowerCase();
+                    return direction === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                else if (column === 'price') {
+                    valA = parseFloat($(a).find('td:nth-child(4)').text());
+                    valB = parseFloat($(b).find('td:nth-child(4)').text());
+                    return direction === 'asc' ? valA - valB : valB - valA;
+                }
+                else if (column === 'stockQuantity') {
+                    valA = parseInt($(a).find('td:nth-child(5)').text());
+                    valB = parseInt($(b).find('td:nth-child(5)').text());
+                    return direction === 'asc' ? valA - valB : valB - valA;
+                }
+                return 0;
+            });
+
+            $('#productTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

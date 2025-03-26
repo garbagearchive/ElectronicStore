@@ -6,6 +6,52 @@
     <title>Product Discount Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -38,9 +84,27 @@
             <thead>
                 <tr>
                     <th>Discount ID</th>
-                    <th>Discount Code</th>
+                    <th>
+                        Discount Code
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('discountCode')">▼</button>
+                            <div id="discountCode-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('discountCode', 'asc')">A → Z</a>
+                                <a onclick="sortTable('discountCode', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Product ID</th>
-                    <th>Product Name</th>
+                    <th>
+                        Product Name
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('productName')">▼</button>
+                            <div id="productName-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('productName', 'asc')">A → Z</a>
+                                <a onclick="sortTable('productName', 'desc')">Z → A</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -65,22 +129,32 @@
             // Load all product discounts
             function loadPDiscounts() {
                 $.get('/api/product-discounts/List', function (data) {
-                    $('#pdiscountTable tbody').empty();
-                    data.data.forEach(function (pdiscount) {
-                        $('#pdiscountTable tbody').append(`
-                                <tr>
-                                    <td>${pdiscount.discountId}</td>
-                                    <td>${pdiscount.discountCode}</td>
-                                    <td>${pdiscount.productId}</td>
-                                    <td>${pdiscount.productName}</td>
-                                    <td>
-                                        <button onclick="editPDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Edit</button>
-                                        <button onclick="deletePDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Delete</button>
-                                    </td>
-                                </tr>
-                            `);
-                    });
+                    populatePDiscountTable(data.data);
                 });
+            }
+
+            // Populate product discount table with data
+            function populatePDiscountTable(pdiscounts) {
+                $('#pdiscountTable tbody').empty();
+                pdiscounts.forEach(function (pdiscount) {
+                    $('#pdiscountTable tbody').append(createPDiscountRow(pdiscount));
+                });
+            }
+
+            // Create product discount table row
+            function createPDiscountRow(pdiscount) {
+                return `
+                        <tr>
+                            <td>${pdiscount.discountId}</td>
+                            <td>${pdiscount.discountCode}</td>
+                            <td>${pdiscount.productId}</td>
+                            <td>${pdiscount.productName}</td>
+                            <td>
+                                <button onclick="editPDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Edit</button>
+                                <button onclick="deletePDiscount(${pdiscount.productId}, ${pdiscount.discountId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
             }
 
             // Search product discount by Product ID and Discount ID
@@ -95,22 +169,13 @@
                 }
 
                 $.get(`/api/product-discounts/Search/${productId}/${discountId}`, function (data) {
-                    $('#pdiscountTable tbody').empty();
                     if (data.data) {
-                        $('#pdiscountTable tbody').append(`
-                                <tr>
-                                    <td>${data.data.discountId}</td>
-                                    <td>${data.data.discountCode}</td>
-                                    <td>${data.data.productId}</td>
-                                    <td>${data.data.productName}</td>
-                                    <td>
-                                        <button onclick="editPDiscount(${data.data.productId}, ${data.data.discountId})">Edit</button>
-                                        <button onclick="deletePDiscount(${data.data.productId}, ${data.data.discountId})">Delete</button>
-                                    </td>
-                                </tr>
-                            `);
+                        // Display single result if found
+                        $('#pdiscountTable tbody').empty();
+                        $('#pdiscountTable tbody').append(createPDiscountRow(data.data));
                     } else {
                         alert('Product discount not found.');
+                        loadPDiscounts();
                     }
                 });
             });
@@ -184,6 +249,59 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#pdiscountTable tbody tr').get();
+
+            rows.sort(function (a, b) {
+                let valA, valB;
+
+                // Get the values based on column
+                if (column === 'discountCode') {
+                    valA = $(a).find('td:nth-child(2)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(2)').text().toLowerCase();
+                }
+                else if (column === 'productName') {
+                    valA = $(a).find('td:nth-child(4)').text().toLowerCase();
+                    valB = $(b).find('td:nth-child(4)').text().toLowerCase();
+                }
+
+                // Determine sort order
+                if (direction === 'asc') {
+                    return valA.localeCompare(valB);
+                } else {
+                    return valB.localeCompare(valA);
+                }
+            });
+
+            $('#pdiscountTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

@@ -6,6 +6,73 @@
     <title>Repair Management</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Sort dropdown styles */
+        .sort-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            right: 0;
+        }
+
+            .sort-dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                cursor: pointer;
+            }
+
+                .sort-dropdown-content a:hover {
+                    background-color: #f1f1f1;
+                }
+
+        .sort-dropdown:hover .sort-dropdown-content {
+            display: block;
+        }
+
+        .sort-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Status colors */
+        .status-pending {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .status-in-progress {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .status-completed {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-failed {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -40,9 +107,40 @@
                     <th>Product ID</th>
                     <th>User ID</th>
                     <th>Issue Description</th>
-                    <th>Repair Status</th>
-                    <th>Request Date</th>
-                    <th>Completion Date</th>
+                    <th>
+                        Repair Status
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('repairStatus')">▼</button>
+                            <div id="repairStatus-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('repairStatus', 'pending')">Pending</a>
+                                <a onclick="sortTable('repairStatus', 'in progress')">In Progress</a>
+                                <a onclick="sortTable('repairStatus', 'completed')">Completed</a>
+                                <a onclick="sortTable('repairStatus', 'failed')">Failed</a>
+                                <a onclick="sortTable('repairStatus', 'all')">Show All</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Request Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('repairRequestDate')">▼</button>
+                            <div id="repairRequestDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('repairRequestDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('repairRequestDate', 'desc')">Newest First</a>
+                            </div>
+                        </div>
+                    </th>
+                    <th>
+                        Completion Date
+                        <div class="sort-dropdown">
+                            <button class="sort-btn" onclick="toggleDropdown('repairCompletionDate')">▼</button>
+                            <div id="repairCompletionDate-dropdown" class="sort-dropdown-content">
+                                <a onclick="sortTable('repairCompletionDate', 'asc')">Oldest First</a>
+                                <a onclick="sortTable('repairCompletionDate', 'desc')">Newest First</a>
+                                <a onclick="sortTable('repairCompletionDate', 'not_completed')">Not Completed</a>
+                            </div>
+                        </div>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -73,30 +171,44 @@
     </div>
     <script>
         $(document).ready(function () {
+            var currentStatusFilter = 'all';
+            var currentCompletionFilter = 'all';
+
             loadRepairs();
 
             // Load all repairs
             function loadRepairs() {
                 $.get('/api/repairs/List', function (data) {
-                    $('#repairTable tbody').empty();
-                    data.data.forEach(function (repair) {
-                        $('#repairTable tbody').append(`
-                                    <tr>
-                                        <td>${repair.repairId}</td>
-                                        <td>${repair.productId}</td>
-                                        <td>${repair.userId}</td>
-                                        <td>${repair.issueDescription}</td>
-                                        <td>${repair.repairStatus}</td>
-                                        <td>${new Date(repair.repairRequestDate).toLocaleString()}</td>
-                                        <td>${repair.repairCompletionDate ? new Date(repair.repairCompletionDate).toLocaleString() : 'N/A'}</td>
-                                        <td>
-                                            <button onclick="editRepair(${repair.repairId})">Edit</button>
-                                            <button onclick="deleteRepair(${repair.repairId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
-                    });
+                    populateRepairTable(data.data);
                 });
+            }
+
+            // Populate repair table with data
+            function populateRepairTable(repairs) {
+                $('#repairTable tbody').empty();
+                repairs.forEach(function (repair) {
+                    $('#repairTable tbody').append(createRepairRow(repair));
+                });
+            }
+
+            // Create repair table row
+            function createRepairRow(repair) {
+                const statusClass = `status-${repair.repairStatus.toLowerCase().replace(' ', '-')}`;
+                return `
+                        <tr>
+                            <td>${repair.repairId}</td>
+                            <td>${repair.productId}</td>
+                            <td>${repair.userId}</td>
+                            <td>${repair.issueDescription}</td>
+                            <td class="${statusClass}">${repair.repairStatus}</td>
+                            <td>${new Date(repair.repairRequestDate).toLocaleString()}</td>
+                            <td>${repair.repairCompletionDate ? new Date(repair.repairCompletionDate).toLocaleString() : 'N/A'}</td>
+                            <td>
+                                <button onclick="editRepair(${repair.repairId})">Edit</button>
+                                <button onclick="deleteRepair(${repair.repairId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
             }
 
             // Search repair by ID
@@ -111,21 +223,7 @@
                 $.get(`/api/repairs/Search/${id}`, function (data) {
                     $('#repairTable tbody').empty();
                     if (data.data) {
-                        $('#repairTable tbody').append(`
-                                    <tr>
-                                        <td>${data.data.repairId}</td>
-                                        <td>${data.data.productId}</td>
-                                        <td>${data.data.userId}</td>
-                                        <td>${data.data.issueDescription}</td>
-                                        <td>${data.data.repairStatus}</td>
-                                        <td>${new Date(data.data.repairRequestDate).toLocaleString()}</td>
-                                        <td>${data.data.repairCompletionDate ? new Date(data.data.repairCompletionDate).toLocaleString() : 'N/A'}</td>
-                                        <td>
-                                            <button onclick="editRepair(${data.data.repairId})">Edit</button>
-                                            <button onclick="deleteRepair(${data.data.repairId})">Delete</button>
-                                        </td>
-                                    </tr>
-                                `);
+                        $('#repairTable tbody').append(createRepairRow(data.data));
                     } else {
                         alert('Repair not found.');
                     }
@@ -214,6 +312,78 @@
                 }
             };
         });
+
+        // Sorting functions
+        function toggleDropdown(column) {
+            // Close all other dropdowns
+            document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                if (dropdown.id !== `${column}-dropdown`) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            // Toggle the current dropdown
+            const dropdown = document.getElementById(`${column}-dropdown`);
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function sortTable(column, direction) {
+            let rows = $('#repairTable tbody tr').get();
+
+            if (column === 'repairRequestDate') {
+                // Sort by request date
+                rows.sort(function (a, b) {
+                    const dateA = new Date($(a).find('td:nth-child(6)').text());
+                    const dateB = new Date($(b).find('td:nth-child(6)').text());
+                    return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                });
+            }
+            else if (column === 'repairCompletionDate') {
+                // Filter by completion date
+                if (direction === 'not_completed') {
+                    rows = rows.filter(row => {
+                        const completionDate = $(row).find('td:nth-child(7)').text();
+                        return completionDate === 'N/A';
+                    });
+                } else {
+                    rows = rows.filter(row => {
+                        const completionDate = $(row).find('td:nth-child(7)').text();
+                        return completionDate !== 'N/A';
+                    });
+
+                    if (direction !== 'all') {
+                        rows.sort(function (a, b) {
+                            const dateA = new Date($(a).find('td:nth-child(7)').text());
+                            const dateB = new Date($(b).find('td:nth-child(7)').text());
+                            return direction === 'asc' ? dateA - dateB : dateB - dateA;
+                        });
+                    }
+                }
+            }
+            else if (column === 'repairStatus') {
+                // Filter by repair status
+                if (direction !== 'all') {
+                    rows = rows.filter(row => {
+                        const status = $(row).find('td:nth-child(5)').text().toLowerCase();
+                        return status.includes(direction.toLowerCase());
+                    });
+                }
+            }
+
+            $('#repairTable tbody').empty().append(rows);
+
+            // Close the dropdown after selection
+            document.getElementById(`${column}-dropdown`).style.display = 'none';
+        }
+
+        // Close dropdowns when clicking elsewhere
+        window.onclick = function (event) {
+            if (!event.target.matches('.sort-btn') && !event.target.matches('.sort-dropdown-content a')) {
+                document.querySelectorAll('.sort-dropdown-content').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
     </script>
 </body>
 </html>

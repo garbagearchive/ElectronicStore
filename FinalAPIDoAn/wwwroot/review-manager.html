@@ -88,6 +88,7 @@
                     <th>User ID</th>
                     <th>Rating</th>
                     <th>Comment</th>
+                    <th>Review Date</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -120,7 +121,6 @@
                     <label for="comment">Comment:</label>
                     <textarea id="comment" required></textarea>
                 </div>
-                
             </form>
         </div>
     </div>
@@ -149,6 +149,9 @@
                 $.get('/api/reviews/List', function (data) {
                     $('#reviewTable tbody').empty();
                     data.data.forEach(function (review) {
+                        // Format the date for better readability
+                        const reviewDate = review.reviewDate ? new Date(review.reviewDate).toLocaleString() : 'N/A';
+
                         $('#reviewTable tbody').append(`
                                 <tr>
                                     <td>${review.reviewId}</td>
@@ -156,8 +159,9 @@
                                     <td>${review.userId}</td>
                                     <td>${review.rating}</td>
                                     <td>${review.comment}</td>
+                                    <td>${reviewDate}</td>
                                     <td>
-                                        
+                                        <button onclick="editReview(${review.reviewId})">Edit</button>
                                         <button onclick="deleteReview(${review.reviewId})">Delete</button>
                                     </td>
                                 </tr>
@@ -178,6 +182,8 @@
                 $.get(`/api/reviews/Search/${id}`, function (data) {
                     $('#reviewTable tbody').empty();
                     if (data.data) {
+                        const reviewDate = data.data.reviewDate ? new Date(data.data.reviewDate).toLocaleString() : 'N/A';
+
                         $('#reviewTable tbody').append(`
                                 <tr>
                                     <td>${data.data.reviewId}</td>
@@ -185,6 +191,7 @@
                                     <td>${data.data.userId}</td>
                                     <td>${data.data.rating}</td>
                                     <td>${data.data.comment}</td>
+                                    <td>${reviewDate}</td>
                                     <td>
                                         <button onclick="editReview(${data.data.reviewId})">Edit</button>
                                         <button onclick="deleteReview(${data.data.reviewId})">Delete</button>

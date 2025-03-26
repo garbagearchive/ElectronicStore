@@ -170,3 +170,9 @@ SELECT * FROM ProductDiscounts;
 -- 6. Người dùng có thể đánh giá sản phẩm thông qua ProductReviews.
 -- 7. Người dùng có thể yêu cầu sửa chữa sản phẩm thông qua ProductRepairs.
 -- 8. Sản phẩm có thể được áp dụng nhiều mã giảm giá.
+
+
+ALTER TABLE ProductReviews
+ADD CreateAt DATETIME NOT NULL DEFAULT GETDATE();
+ALTER TABLE ProductReviews
+ADD ReviewImages NVARCHAR(255);
