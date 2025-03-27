@@ -84,17 +84,17 @@ public class AuthController : ControllerBase
     }
     public class RegisterRequest
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string Phone { get; set; }
-        public string Address { get; set; }
-        public string Role { get; set; }
+        public required string Username { get; set; }
+        public required string Password { get; set; }
+        public required string FullName { get; set; }
+        public required string Email { get; set; }
+        public required string Phone { get; set; }
+        public required string Address { get; set; }
+        public required string Role { get; set; }
     }
     public class AssignRoleRequest
     {
         public int UserId { get; set; } // ID của người dùng
-        public string Role { get; set; } // Vai trò mới (ví dụ: "Admin", "Customer")
+        public required string Role { get; set; } // Vai trò mới (ví dụ: "Admin", "Customer")
     }
 }

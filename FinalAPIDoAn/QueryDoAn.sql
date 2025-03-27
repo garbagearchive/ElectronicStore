@@ -30,7 +30,6 @@ CREATE TABLE Products (
     Price DECIMAL(18, 2) NOT NULL,
     StockQuantity INT NOT NULL,
     CategoryID INT,
-    ImageURL NVARCHAR(255),
     CreatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
 );
@@ -137,6 +136,27 @@ CREATE TABLE ProductDiscounts (
     FOREIGN KEY (DiscountID) REFERENCES Discounts(DiscountID)
 );
 
+-- Bảng lưu trữ ảnh sản phẩm
+CREATE TABLE ProductImages (
+    ImageID INT IDENTITY(1,1) PRIMARY KEY,
+    ProductID INT NOT NULL,
+    ImageURL NVARCHAR(255) NOT NULL,  -- Đường dẫn đầy đủ đến ảnh
+    ThumbnailURL NVARCHAR(255),       -- Đường dẫn ảnh thumbnail (nếu cần)
+    ImageOrder INT DEFAULT 0,         -- Thứ tự hiển thị ảnh
+    IsDefault BIT DEFAULT 0,          -- Có phải ảnh mặc định không
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+-- Bảng lưu trữ ảnh đánh giá
+CREATE TABLE ReviewImages (
+    ImageID INT IDENTITY(1,1) PRIMARY KEY,
+    ReviewID INT NOT NULL,
+    ImageURL NVARCHAR(255) NOT NULL,  -- Đường dẫn đầy đủ đến ảnh
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (ReviewID) REFERENCES ProductReviews(ReviewID) ON DELETE CASCADE
+);
+
 -- Tạo chỉ mục để tối ưu truy vấn
 CREATE INDEX IX_Products_CategoryID ON Products(CategoryID);
 CREATE INDEX IX_Orders_UserID ON Orders(UserID);
@@ -147,6 +167,8 @@ CREATE INDEX IX_ProductRepairs_ProductID ON ProductRepairs(ProductID);
 CREATE INDEX IX_ProductRepairs_UserID ON ProductRepairs(UserID);
 CREATE INDEX IX_ProductDiscounts_ProductID ON ProductDiscounts(ProductID);
 CREATE INDEX IX_ProductDiscounts_DiscountID ON ProductDiscounts(DiscountID);
+CREATE INDEX IX_ProductImages_ProductID ON ProductImages(ProductID);
+CREATE INDEX IX_ReviewImages_ReviewID ON ReviewImages(ReviewID);
 
 -- Kiểm tra dữ liệu
 SELECT * FROM Users;
@@ -172,7 +194,3 @@ SELECT * FROM ProductDiscounts;
 -- 8. Sản phẩm có thể được áp dụng nhiều mã giảm giá.
 
 
-ALTER TABLE ProductReviews
-ADD CreateAt DATETIME NOT NULL DEFAULT GETDATE();
-ALTER TABLE ProductReviews
-ADD ReviewImages NVARCHAR(255);

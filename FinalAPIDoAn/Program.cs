@@ -1,15 +1,16 @@
 using FinalAPIDoAn.Data;
-using FinalAPIDoAn.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 string strcnn = builder.Configuration.GetConnectionString("cnn");
 builder.Services.AddDbContext<KetNoiCSDL>(options => options.UseSqlServer(strcnn));
-
+builder.Services.AddSingleton<CloudinaryService>();
 // Add services to the container.
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddControllers();
@@ -45,6 +46,16 @@ builder.Services.AddAuthorization(Options =>
     Options.AddPolicy("AdminPolicy", policy => policy.RequireClaim("Admin"));
     Options.AddPolicy("UserPolicy", policy => policy.RequireClaim("User"));
 
+});
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 52428800; // 50MB
 });
 var app = builder.Build();
 app.UseCors(builder => builder.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());

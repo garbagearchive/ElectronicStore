@@ -27,7 +27,7 @@ public class AuthService
     }
 
     // Đăng nhập người dùng
-    public async Task<string> Login(string username, string password)
+    public async Task<string?> Login(string username, string password)
     {
         try
         {

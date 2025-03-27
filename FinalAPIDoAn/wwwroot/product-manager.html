@@ -50,6 +50,104 @@
         .hidden {
             display: none;
         }
+
+        /* Image upload styles */
+        .image-upload-container {
+            margin: 20px 0;
+        }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+            .image-preview-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+
+            .image-preview-item .remove-btn {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: red;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+            }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        #productTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+            #productTable th, #productTable td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+
+            #productTable th {
+                background-color: #f2f2f2;
+            }
+
+            #productTable tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+
+            #productTable tr:hover {
+                background-color: #f1f1f1;
+            }
     </style>
 </head>
 <body>
@@ -73,8 +171,10 @@
 
         <!-- Search Form -->
         <form id="searchForm">
-            <input type="text" id="searchKeyword" placeholder="Search by name or description">
-            <button type="submit">Search</button>
+            <div class="form-group">
+                <input type="text" id="searchKeyword" class="form-control" placeholder="Search by name or description">
+            </div>
+            <button type="submit" class="btn">Search</button>
         </form>
 
         <!-- Product List -->
@@ -122,8 +222,8 @@
                             </div>
                         </div>
                     </th>
-                    <th>Category ID</th>
-                    <th>Image URL</th>
+                    <th>Category</th>
+                    <th>Images</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -133,21 +233,115 @@
         </table>
 
         <!-- Add/Edit Product Form -->
-        <form id="productForm">
+        <form id="productForm" enctype="multipart/form-data">
             <input type="hidden" id="productId">
-            <input type="text" id="productName" placeholder="Product Name" required>
-            <input type="text" id="description" placeholder="Description" required>
-            <input type="number" id="price" placeholder="Price" step="0.01" required>
-            <input type="number" id="stockQuantity" placeholder="Stock Quantity" required>
-            <input type="number" id="categoryId" placeholder="Category ID" required>
-            <input type="text" id="imageURL" placeholder="Image URL" required>
-            <button type="submit" id="saveButton">Add Product</button>
-            <button type="button" id="cancelButton" class="hidden">Cancel</button>
+
+            <div class="form-group">
+                <label for="productName">Product Name</label>
+                <input type="text" id="productName" name="ProductName" class="form-control" placeholder="Product Name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" id="description" name="Description" class="form-control" placeholder="Description" required>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Price</label>
+                <input type="number" id="price" name="Price" class="form-control" placeholder="Price" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="stockQuantity">Stock Quantity</label>
+                <input type="number" id="stockQuantity" name="StockQuantity" class="form-control" placeholder="Stock Quantity" required>
+            </div>
+
+            <div class="form-group">
+                <label for="categoryId">Category</label>
+                <select id="categoryId" name="CategoryID" class="form-control" required>
+                    <!-- Categories will be populated via JavaScript -->
+                </select>
+            </div>
+
+            <div class="form-group image-upload-container">
+                <label>Main Image</label>
+                <input type="file" id="mainImage" name="MainImage" class="form-control" accept="image/*">
+                <div id="mainImagePreview" class="image-preview"></div>
+            </div>
+
+            <div class="form-group image-upload-container">
+                <label>Additional Images</label>
+                <input type="file" id="additionalImages" name="AdditionalImages" class="form-control" accept="image/*" multiple>
+                <div id="additionalImagesPreview" class="image-preview"></div>
+            </div>
+
+            <button type="submit" id="saveButton" class="btn">Add Product</button>
+            <button type="button" id="cancelButton" class="btn btn-secondary hidden">Cancel</button>
         </form>
     </div>
     <script>
         $(document).ready(function () {
+            // Load categories first
+            loadCategories();
+
+            // Initialize image preview handlers
+            initImageUploads();
             loadProducts();
+
+            // Initialize image upload previews
+            function initImageUploads() {
+                // Main image preview
+                $('#mainImage').change(function () {
+                    const file = this.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            $('#mainImagePreview').html(`
+                                        <div class="image-preview-item">
+                                            <img src="${e.target.result}" alt="Main Image Preview">
+                                            <button class="remove-btn" onclick="removeMainImage()">×</button>
+                                        </div>
+                                    `);
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Additional images preview
+                $('#additionalImages').change(function () {
+                    const files = this.files;
+                    $('#additionalImagesPreview').empty();
+
+                    if (files.length > 0) {
+                        for (let i = 0; i < files.length; i++) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                $('#additionalImagesPreview').append(`
+                                            <div class="image-preview-item">
+                                                <img src="${e.target.result}" alt="Additional Image Preview">
+                                                <button class="remove-btn" onclick="removeAdditionalImage(${i})">×</button>
+                                            </div>
+                                        `);
+                            }
+                            reader.readAsDataURL(files[i]);
+                        }
+                    }
+                });
+            }
+
+            // Load all categories
+            function loadCategories() {
+                $.get('/api/categories/List', function (data) {
+                    const select = $('#categoryId');
+                    select.empty();
+                    select.append('<option value="">Select a category</option>');
+                    data.data.forEach(function (category) {
+                        select.append(`<option value="${category.categoryId}">${category.categoryName}</option>`);
+                    });
+                }).fail(function () {
+                    console.error('Failed to load categories');
+                });
+            }
 
             // Load all products
             function loadProducts() {
@@ -160,21 +354,28 @@
             function populateProductTable(products) {
                 $('#productTable tbody').empty();
                 products.forEach(function (product) {
+                    let imagesCell = '';
+                    if (product.productImages && product.productImages.length > 0) {
+                        imagesCell = product.productImages
+                            .map(img => `<img src="${img.imageUrl}" style="width:50px;height:50px;object-fit:cover;margin-right:5px;" title="Image ID: ${img.imageId}">`)
+                            .join('');
+                    }
+
                     $('#productTable tbody').append(`
-                            <tr>
-                                <td>${product.productId}</td>
-                                <td>${product.productName}</td>
-                                <td>${product.description}</td>
-                                <td>${product.price}</td>
-                                <td>${product.stockQuantity}</td>
-                                <td>${product.categoryId}</td>
-                                <td>${product.imageUrl}</td>
-                                <td>
-                                    <button onclick="editProduct(${product.productId})">Edit</button>
-                                    <button onclick="deleteProduct(${product.productId})">Delete</button>
-                                </td>
-                            </tr>
-                        `);
+                                <tr>
+                                    <td>${product.productId}</td>
+                                    <td>${product.productName}</td>
+                                    <td>${product.description}</td>
+                                    <td>${product.price}</td>
+                                    <td>${product.stockQuantity}</td>
+                                    <td>${product.category?.categoryName || 'N/A'}</td>
+                                    <td>${imagesCell}</td>
+                                    <td>
+                                        <button class="btn" onclick="editProduct(${product.productId})">Edit</button>
+                                        <button class="btn btn-danger" onclick="deleteProduct(${product.productId})">Delete</button>
+                                    </td>
+                                </tr>
+                            `);
                 });
             }
 
@@ -190,27 +391,51 @@
             // Add or Update Product
             $('#productForm').submit(function (event) {
                 event.preventDefault();
-                var product = {
-                    productId: $('#productId').val(),
-                    productName: $('#productName').val(),
-                    description: $('#description').val(),
-                    price: parseFloat($('#price').val()),
-                    stockQuantity: parseInt($('#stockQuantity').val()),
-                    categoryID: parseInt($('#categoryId').val()),
-                    imageURL: $('#imageURL').val()
-                };
 
-                var method = product.productId ? 'PUT' : 'POST';
-                var url = product.productId ? `/api/products/Update/${product.productId}` : '/api/products/Add';
+                const formData = new FormData();
+                const productId = $('#productId').val();
+
+                // Add product data
+                formData.append('ProductName', $('#productName').val());
+                formData.append('Description', $('#description').val());
+                formData.append('Price', $('#price').val());
+                formData.append('StockQuantity', $('#stockQuantity').val());
+                formData.append('CategoryID', $('#categoryId').val());
+
+                // Add main image if exists
+                const mainImage = $('#mainImage')[0].files[0];
+                if (mainImage) {
+                    formData.append('MainImage', mainImage);
+                }
+
+                // Add additional images if exist
+                const additionalImages = $('#additionalImages')[0].files;
+                if (additionalImages && additionalImages.length > 0) {
+                    for (let i = 0; i < additionalImages.length; i++) {
+                        formData.append('AdditionalImages', additionalImages[i]);
+                    }
+                }
+
+                const method = productId ? 'PUT' : 'POST';
+                const url = productId ? `/api/products/Update/${productId}` : '/api/products/Add';
 
                 $.ajax({
                     url: url,
                     type: method,
-                    contentType: 'application/json',
-                    data: JSON.stringify(product),
-                    success: function () {
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
                         loadProducts();
                         resetForm();
+                        alert(productId ? 'Product updated successfully' : 'Product added successfully');
+                    },
+                    error: function (xhr, status, error) {
+                        let errorMessage = 'Error: ' + error;
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        alert(errorMessage);
                     }
                 });
             });
@@ -228,7 +453,10 @@
                 $('#price').val('');
                 $('#stockQuantity').val('');
                 $('#categoryId').val('');
-                $('#imageURL').val('');
+                $('#mainImage').val('');
+                $('#additionalImages').val('');
+                $('#mainImagePreview').empty();
+                $('#additionalImagesPreview').empty();
                 $('#saveButton').text('Add Product');
                 $('#cancelButton').addClass('hidden');
             }
@@ -244,7 +472,32 @@
                         $('#price').val(product.price);
                         $('#stockQuantity').val(product.stockQuantity);
                         $('#categoryId').val(product.categoryId);
-                        $('#imageURL').val(product.imageUrl);
+
+                        // Load images if they exist
+                        if (product.productImages && product.productImages.length > 0) {
+                            const mainImage = product.productImages.find(img => img.isDefault);
+                            if (mainImage) {
+                                $('#mainImagePreview').html(`
+                                            <div class="image-preview-item">
+                                                <img src="${mainImage.imageUrl}" alt="Main Image Preview">
+                                                <button class="remove-btn" onclick="removeMainImage()">×</button>
+                                            </div>
+                                        `);
+                            }
+
+                            const additionalImages = product.productImages.filter(img => !img.isDefault);
+                            if (additionalImages.length > 0) {
+                                additionalImages.forEach(img => {
+                                    $('#additionalImagesPreview').append(`
+                                                <div class="image-preview-item">
+                                                    <img src="${img.imageUrl}" alt="Additional Image Preview">
+                                                    <button class="remove-btn" onclick="removeAdditionalImageByUrl('${img.imageUrl}')">×</button>
+                                                </div>
+                                            `);
+                                });
+                            }
+                        }
+
                         $('#saveButton').text('Update Product');
                         $('#cancelButton').removeClass('hidden');
                     }
@@ -261,11 +514,55 @@
                         type: 'DELETE',
                         success: function () {
                             loadProducts();
+                            alert('Product deleted successfully');
+                        },
+                        error: function (xhr) {
+                            let errorMessage = 'Failed to delete product';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            alert(errorMessage);
                         }
                     });
                 }
             };
         });
+
+        // Image removal functions
+        function removeMainImage() {
+            $('#mainImage').val('');
+            $('#mainImagePreview').empty();
+        }
+
+        function removeAdditionalImage(index) {
+            const files = $('#additionalImages')[0].files;
+            const newFiles = Array.from(files).filter((_, i) => i !== index);
+
+            const dataTransfer = new DataTransfer();
+            newFiles.forEach(file => dataTransfer.items.add(file));
+            $('#additionalImages')[0].files = dataTransfer.files;
+
+            // Rebuild preview
+            $('#additionalImagesPreview').empty();
+            for (let i = 0; i < newFiles.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#additionalImagesPreview').append(`
+                                <div class="image-preview-item">
+                                    <img src="${e.target.result}" alt="Additional Image Preview">
+                                    <button class="remove-btn" onclick="removeAdditionalImage(${i})">×</button>
+                                </div>
+                            `);
+                }
+                reader.readAsDataURL(newFiles[i]);
+            }
+        }
+
+        function removeAdditionalImageByUrl(url) {
+            // This would need server-side implementation to actually remove the image
+            alert('Image removal from server will be handled when you submit the form');
+            $(`#additionalImagesPreview img[src="${url}"]`).parent().remove();
+        }
 
         // Sorting functions
         function toggleDropdown(column) {

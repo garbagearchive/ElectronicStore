@@ -52,7 +52,6 @@ namespace FinalAPIDoAn.Controllers
                 UserId = reviewDto.UserId,
                 Rating = reviewDto.Rating,
                 Comment = reviewDto.Comment,
-                ReviewImages = reviewDto.ReviewImages,
                 ReviewDate = DateTime.Now // Using server time instead of client time
             };
 
@@ -87,8 +86,7 @@ namespace FinalAPIDoAn.Controllers
         public int Rating { get; set; }
 
         [Required]
-        public string Comment { get; set; }
+        public required string Comment { get; set; }
 
-        public string ReviewImages { get; set; } // Added this field
     }
 }

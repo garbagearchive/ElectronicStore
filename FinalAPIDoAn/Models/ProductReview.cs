@@ -28,12 +28,12 @@ public partial class ProductReview
     [Column(TypeName = "datetime")]
     public DateTime? ReviewDate { get; set; }
 
-    [StringLength(255)]
-    public string? ReviewImages { get; set; }
-
     [ForeignKey("ProductId")]
     [InverseProperty("ProductReviews")]
     public virtual Product? Product { get; set; }
+
+    [InverseProperty("Review")]
+    public virtual ICollection<ReviewImage> ReviewImages { get; set; } = new List<ReviewImage>();
 
     [ForeignKey("UserId")]
     [InverseProperty("ProductReviews")]

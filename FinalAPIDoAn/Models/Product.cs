@@ -27,10 +27,6 @@ public partial class Product
     [Column("CategoryID")]
     public int? CategoryId { get; set; }
 
-    [Column("ImageURL")]
-    [StringLength(255)]
-    public string? ImageUrl { get; set; }
-
     [Column(TypeName = "datetime")]
     public DateTime? CreatedAt { get; set; }
 
@@ -43,6 +39,9 @@ public partial class Product
 
     [InverseProperty("Product")]
     public virtual ICollection<ProductDiscount> ProductDiscounts { get; set; } = new List<ProductDiscount>();
+
+    [InverseProperty("Product")]
+    public virtual ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
     [InverseProperty("Product")]
     public virtual ICollection<ProductRepair> ProductRepairs { get; set; } = new List<ProductRepair>();

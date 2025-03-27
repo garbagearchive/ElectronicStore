@@ -101,13 +101,13 @@ namespace FinalAPIDoAn.Controllers
         public int OrderId { get; set; }
 
         [Required]
-        public string ShippingAddress { get; set; }
+        public required string ShippingAddress { get; set; }
 
         [Required]
-        public string ShippingMethod { get; set; }
+        public required string ShippingMethod { get; set; }
 
         [Required]
-        public string TrackingNumber { get; set; }
+        public required string TrackingNumber { get; set; }
 
         [Required]
         public DateOnly EstimatedDeliveryDate { get; set; }

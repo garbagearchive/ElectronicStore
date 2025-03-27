@@ -98,9 +98,9 @@ namespace FinalAPIDoAn.Controllers
     {
         [Required(ErrorMessage = "Category name is required.")]
         [MaxLength(255, ErrorMessage = "Category name must be at most 255 characters.")]
-        public string CategoryName { get; set; }
+        public required string CategoryName { get; set; }
 
         [MaxLength(1000, ErrorMessage = "Description must be at most 1000 characters.")]
-        public string Description { get; set; }
+        public required string Description { get; set; }
     }
 }
