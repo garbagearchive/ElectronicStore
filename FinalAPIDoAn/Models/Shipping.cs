@@ -14,7 +14,7 @@ public partial class Shipping
     public int ShippingId { get; set; }
 
     [Column("OrderID")]
-    public int? OrderId { get; set; }
+    public int OrderId { get; set; }
 
     [StringLength(255)]
     public string ShippingAddress { get; set; } = null!;

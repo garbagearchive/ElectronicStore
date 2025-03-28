@@ -13,7 +13,7 @@ public partial class Payment
     public int PaymentId { get; set; }
 
     [Column("OrderID")]
-    public int? OrderId { get; set; }
+    public int OrderId { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime? PaymentDate { get; set; }

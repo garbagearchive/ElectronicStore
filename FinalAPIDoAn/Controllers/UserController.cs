@@ -1,21 +1,26 @@
 ﻿using FinalAPIDoAn.Data;
 using FinalAPIDoAn.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
+using BCrypt.Net;
 
 namespace FinalAPIDoAn.Controllers
 {
-    [Route("api/user")]
+    [Route("api/account")]
     [ApiController]
-    public class UserController : ControllerBase
+    public class AccountController : ControllerBase
     {
         private readonly KetNoiCSDL _dbc;
+        private readonly AuthService _authService;
 
-        public UserController(KetNoiCSDL dbc)
+        public AccountController(KetNoiCSDL dbc, AuthService authService)
         {
             _dbc = dbc;
+            _authService = authService;
         }
+
+        // -------------------- User Management Endpoints --------------------
 
         [HttpGet("List")]
         public IActionResult GetAllUserDetails()
@@ -48,30 +53,6 @@ namespace FinalAPIDoAn.Controllers
             return Ok(new { data = user });
         }
 
-
-        [HttpPost("Add")]
-        public IActionResult AddUser([FromBody] UserDto userDto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var user = new User
-            {
-                Username = userDto.Username,
-                PasswordHash = userDto.PasswordHash,
-                FullName = userDto.FullName,
-                Email = userDto.Email,
-                Phone = userDto.Phone,
-                Address = userDto.Address,
-                Role = userDto.Role ?? "Customer"
-            };
-
-            _dbc.Users.Add(user);
-            _dbc.SaveChanges();
-
-            return CreatedAtAction(nameof(SearchName), new { keyword = user.FullName }, user);
-        }
-
         [HttpPut("Update/{id}")]
         public IActionResult UpdateUser(int id, [FromBody] UserDto userDto)
         {
@@ -88,7 +69,7 @@ namespace FinalAPIDoAn.Controllers
             user.Email = userDto.Email;
             user.Phone = userDto.Phone;
             user.Address = userDto.Address;
-            user.Role = userDto.Role ?? "Customer";
+            user.Role = userDto.Role ?? "Buyer";
 
             _dbc.Users.Update(user);
             _dbc.SaveChanges();
@@ -99,30 +80,126 @@ namespace FinalAPIDoAn.Controllers
         [HttpDelete("Delete/{id}")]
         public IActionResult DeleteUser(int id)
         {
-            var user = _dbc.Users.SingleOrDefault(o => o.UserId == id);
+            using var transaction = _dbc.Database.BeginTransaction();
+            try
+            {
+                var user = _dbc.Users.SingleOrDefault(o => o.UserId == id);
+                if (user == null)
+                    return NotFound(new { message = "User not found." });
+
+                // Xoá ShoppingCart
+                var userCartItems = _dbc.ShoppingCarts.Where(c => c.UserId == id).ToList();
+                if (userCartItems.Any())
+                {
+                    _dbc.ShoppingCarts.RemoveRange(userCartItems);
+                }
+
+                // Xoá Orders và dữ liệu liên quan
+                var userOrders = _dbc.Orders.Where(o => o.UserId == id).ToList();
+                if (userOrders.Any())
+                {
+                    var orderIds = userOrders.Select(o => o.OrderId).ToList();
+                    var orderDetails = _dbc.OrderDetails.Where(od => orderIds.Contains(od.OrderId)).ToList();
+                    if (orderDetails.Any()) _dbc.OrderDetails.RemoveRange(orderDetails);
+
+                    var payments = _dbc.Payments.Where(p => orderIds.Contains(p.OrderId)).ToList();
+                    if (payments.Any()) _dbc.Payments.RemoveRange(payments);
+
+                    var shippings = _dbc.Shippings.Where(s => orderIds.Contains(s.OrderId)).ToList();
+                    if (shippings.Any()) _dbc.Shippings.RemoveRange(shippings);
+
+                    _dbc.Orders.RemoveRange(userOrders);
+                }
+
+                // Xoá ProductReviews
+                var userReviews = _dbc.ProductReviews.Where(o => o.UserId == id).ToList();
+                if (userReviews.Any()) _dbc.ProductReviews.RemoveRange(userReviews);
+
+                // Xoá ProductRepairs
+                var userRepairs = _dbc.ProductRepairs.Where(o => o.UserId == id).ToList();
+                if (userRepairs.Any()) _dbc.ProductRepairs.RemoveRange(userRepairs);
+
+                _dbc.Users.Remove(user);
+                _dbc.SaveChanges();
+                transaction.Commit();
+
+                return Ok(new { message = "User and related data deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                return StatusCode(500, new { message = "Internal server error.", error = ex.Message });
+            }
+        }
+
+        // -------------------- Authentication Endpoints --------------------
+
+        // Sử dụng endpoint Register thay cho "Add" để tạo người dùng mới
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+            {
+                return BadRequest("Username and password are required.");
+            }
+
+            var existingUser = await _dbc.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
+            if (existingUser != null)
+            {
+                return Conflict("Username already exists.");
+            }
+
+            // Mã hóa mật khẩu
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            var newUser = new User
+            {
+                Username = request.Username,
+                PasswordHash = hashedPassword,
+                FullName = request.FullName,
+                Email = request.Email,
+                Phone = request.Phone,
+                Address = request.Address,
+                Role = request.Role ?? "Buyer",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _dbc.Users.Add(newUser);
+            await _dbc.SaveChangesAsync();
+
+            return Ok(new { Message = "User registered successfully!" });
+        }
+
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromQuery] string username, [FromQuery] string password)
+        {
+            var token = await _authService.Login(username, password);
+            if (token == null)
+            {
+                return Unauthorized();
+            }
+            return Ok(new { Token = token });
+        }
+
+        [HttpPost("AssignRoles")]
+        public async Task<IActionResult> AssignRoles([FromBody] AssignRoleRequest request)
+        {
+            var user = await _dbc.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
             if (user == null)
-                return NotFound(new { message = "User not found." });
-
-            var userCartItems = _dbc.ShoppingCarts.Where(c => c.UserId == id).ToList();
-            _dbc.ShoppingCarts.RemoveRange(userCartItems);
-
-            var userOrders = _dbc.Orders.Where(o => o.UserId == id).ToList();
-            _dbc.Orders.RemoveRange(userOrders);
-
-            var userReview = _dbc.ProductReviews.Where(o => o.UserId == id).ToList();
-            _dbc.ProductReviews.RemoveRange(userReview);
-
-            var userRepair = _dbc.ProductRepairs.Where(o => o.UserId == id).ToList();
-            _dbc.ProductRepairs.RemoveRange(userRepair);
-
-            _dbc.Users.Remove(user);
-            _dbc.SaveChanges();
-
-            return Ok(new { message = "User deleted successfully." });
+            {
+                return NotFound("User not found");
+            }
+            if (string.IsNullOrEmpty(request.Role))
+            {
+                return BadRequest("Role is required");
+            }
+            user.Role = request.Role;
+            await _dbc.SaveChangesAsync();
+            return Ok(new { message = "Role assigned successfully!" });
         }
     }
-       
 
+    // DTO cho User Management
     public class UserDto
     {
         [Required]
@@ -144,5 +221,37 @@ namespace FinalAPIDoAn.Controllers
         public required string Address { get; set; }
 
         public string? Role { get; set; }
+    }
+
+    // DTO cho Register (Authentication)
+    public class RegisterRequest
+    {
+        [Required]
+        public required string Username { get; set; }
+
+        [Required]
+        public required string Password { get; set; }
+
+        [Required]
+        public required string FullName { get; set; }
+
+        [Required]
+        public required string Email { get; set; }
+
+        [Required]
+        public required string Phone { get; set; }
+
+        [Required]
+        public required string Address { get; set; }
+
+        public string? Role { get; set; }
+    }
+
+    // DTO cho AssignRoles
+    public class AssignRoleRequest
+    {
+        public int UserId { get; set; }
+        [Required]
+        public required string Role { get; set; }
     }
 }

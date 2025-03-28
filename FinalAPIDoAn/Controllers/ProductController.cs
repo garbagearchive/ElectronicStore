@@ -275,41 +275,57 @@ namespace FinalAPIDoAn.Controllers
             }
         }
 
-        // DELETE: api/products/Delete/5
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             using var transaction = await _db.Database.BeginTransactionAsync();
-
             try
             {
+                // Lấy sản phẩm cần xoá kèm theo các ảnh liên quan (nếu có)
                 var product = await _db.Products
                     .Include(p => p.ProductImages)
                     .FirstOrDefaultAsync(p => p.ProductId == id);
 
                 if (product == null)
+                    return NotFound(new { message = "Product not found." });
+
+                // Xoá các ProductDiscount liên kết với sản phẩm này
+                var productDiscounts = _db.ProductDiscounts.Where(pd => pd.ProductId == id).ToList();
+                if (productDiscounts.Any())
                 {
-                    return NotFound(new { message = "Product not found" });
+                    _db.ProductDiscounts.RemoveRange(productDiscounts);
                 }
 
-                // Delete all images from Cloudinary first
-                foreach (var image in product.ProductImages)
+                // Xoá các ảnh sản phẩm (với ví dụ xoá trên Cloudinary)
+                if (product.ProductImages != null && product.ProductImages.Any())
                 {
-                    await DeleteImageFromCloudinary(image.PublicId);
+                    foreach (var image in product.ProductImages)
+                    {
+                        try
+                        {
+                            await DeleteImageFromCloudinary(image.PublicId);
+                            _db.ProductImages.Remove(image);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error deleting image with PublicId {PublicId}", image.PublicId);
+                            // Có thể lựa chọn bỏ qua lỗi nếu không quá quan trọng
+                        }
+                    }
                 }
 
-                // Then delete the product (which will cascade delete images)
+                // Cuối cùng xoá sản phẩm
                 _db.Products.Remove(product);
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(new { message = "Product deleted successfully" });
+                return Ok(new { message = "Product data deleted successfully." });
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, $"Error deleting product with ID {id}");
-                return StatusCode(500, "Internal server error");
+                _logger.LogError(ex, "Error deleting product with ID {id}", id);
+                return StatusCode(500, new { message = "Internal server error." });
             }
         }
 
@@ -436,10 +452,10 @@ namespace FinalAPIDoAn.Controllers
     public class ProductDto
     {
         [Required(ErrorMessage = "Product name is required")]
-        public string ProductName { get; set; }
+        public required string ProductName { get; set; }
 
         [Required(ErrorMessage = "Description is required")]
-        public string Description { get; set; }
+        public required string Description { get; set; }
 
         [Required(ErrorMessage = "Price is required")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
