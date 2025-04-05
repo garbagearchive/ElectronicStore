@@ -143,7 +143,8 @@ CREATE TABLE ProductImages (
     ImageURL NVARCHAR(255) NOT NULL,  -- Đường dẫn đầy đủ đến ảnh
     ThumbnailURL NVARCHAR(255),       -- Đường dẫn ảnh thumbnail (nếu cần)
     ImageOrder INT DEFAULT 0,         -- Thứ tự hiển thị ảnh
-    IsDefault BIT DEFAULT 0,          -- Có phải ảnh mặc định không
+    IsDefault BIT DEFAULT 0, 
+	PublicId NVARCHAR(255) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
 );
@@ -193,4 +194,5 @@ SELECT * FROM ProductDiscounts;
 -- 7. Người dùng có thể yêu cầu sửa chữa sản phẩm thông qua ProductRepairs.
 -- 8. Sản phẩm có thể được áp dụng nhiều mã giảm giá.
 
-
+ALTER TABLE ReviewsImages
+ADD PublicId NVARCHAR(255) NOT NULL;

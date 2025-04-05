@@ -12,16 +12,16 @@ namespace FinalAPIDoAn.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly KetNoiCSDL _db;
+        private readonly KetNoiCSDL _dbc;
         private readonly Cloudinary _cloudinary;
         private readonly ILogger<ProductController> _logger;
 
         public ProductController(
-            KetNoiCSDL db,
+            KetNoiCSDL dbc,
             IConfiguration configuration,
             ILogger<ProductController> logger)
         {
-            _db = db;
+            _dbc = dbc;
             _logger = logger;
 
             // Initialize Cloudinary
@@ -38,7 +38,7 @@ namespace FinalAPIDoAn.Controllers
         {
             try
             {
-                var products = await _db.Products
+                var products = await _dbc.Products
                     .Include(p => p.Category)
                     .Include(p => p.ProductImages)
                     .ToListAsync();
@@ -47,10 +47,20 @@ namespace FinalAPIDoAn.Controllers
             }
             catch (Exception ex)
             {
+                // Log the detailed error
                 _logger.LogError(ex, "Error getting all products");
-                return StatusCode(500, "Internal server error");
+
+                // Return the exception details with the actual error status code
+                return StatusCode(500, new
+                {
+                    message = "Internal server error",
+                    errorCode = 500,
+                    exceptionMessage = ex.Message,
+                    stackTrace = ex.StackTrace
+                });
             }
         }
+
 
         // GET: api/products/Search?keyword=...
         [HttpGet("Search")]
@@ -63,7 +73,7 @@ namespace FinalAPIDoAn.Controllers
                     return BadRequest(new { message = "Search keyword is required" });
                 }
 
-                var results = await _db.Products
+                var results = await _dbc.Products
                     .Include(p => p.ProductImages)
                     .Where(p => p.ProductName.Contains(keyword) ||
                                p.Description.Contains(keyword))
@@ -84,7 +94,7 @@ namespace FinalAPIDoAn.Controllers
         {
             try
             {
-                var product = await _db.Products
+                var product = await _dbc.Products
                     .Include(p => p.Category)
                     .Include(p => p.ProductImages)
                     .FirstOrDefaultAsync(p => p.ProductId == id);
@@ -112,7 +122,7 @@ namespace FinalAPIDoAn.Controllers
                 return BadRequest(ModelState);
             }
 
-            using var transaction = await _db.Database.BeginTransactionAsync();
+            using var transaction = await _dbc.Database.BeginTransactionAsync();
 
             try
             {
@@ -126,8 +136,8 @@ namespace FinalAPIDoAn.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _db.Products.Add(product);
-                await _db.SaveChangesAsync();
+                _dbc.Products.Add(product);
+                await _dbc.SaveChangesAsync();
 
                 // Handle main image upload
                 if (productDto.MainImage != null)
@@ -135,7 +145,7 @@ namespace FinalAPIDoAn.Controllers
                     var uploadResult = await UploadImageToCloudinary(productDto.MainImage, product.ProductId);
                     if (uploadResult != null)
                     {
-                        _db.ProductImages.Add(new ProductImage
+                        _dbc.ProductImages.Add(new ProductImage
                         {
                             ProductId = product.ProductId,
                             ImageUrl = uploadResult.SecureUrl.ToString(),
@@ -156,7 +166,7 @@ namespace FinalAPIDoAn.Controllers
                         var uploadResult = await UploadImageToCloudinary(image, product.ProductId);
                         if (uploadResult != null)
                         {
-                            _db.ProductImages.Add(new ProductImage
+                            _dbc.ProductImages.Add(new ProductImage
                             {
                                 ProductId = product.ProductId,
                                 ImageUrl = uploadResult.SecureUrl.ToString(),
@@ -169,7 +179,7 @@ namespace FinalAPIDoAn.Controllers
                     }
                 }
 
-                await _db.SaveChangesAsync();
+                await _dbc.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return CreatedAtAction(nameof(GetProductById),
@@ -193,11 +203,11 @@ namespace FinalAPIDoAn.Controllers
                 return BadRequest(ModelState);
             }
 
-            using var transaction = await _db.Database.BeginTransactionAsync();
+            using var transaction = await _dbc.Database.BeginTransactionAsync();
 
             try
             {
-                var product = await _db.Products
+                var product = await _dbc.Products
                     .Include(p => p.ProductImages)
                     .FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -221,14 +231,14 @@ namespace FinalAPIDoAn.Controllers
                     if (oldMainImage != null)
                     {
                         await DeleteImageFromCloudinary(oldMainImage.PublicId);
-                        _db.ProductImages.Remove(oldMainImage);
+                        _dbc.ProductImages.Remove(oldMainImage);
                     }
 
                     // Upload new main image
                     var uploadResult = await UploadImageToCloudinary(productDto.MainImage, product.ProductId);
                     if (uploadResult != null)
                     {
-                        _db.ProductImages.Add(new ProductImage
+                        _dbc.ProductImages.Add(new ProductImage
                         {
                             ProductId = product.ProductId,
                             ImageUrl = uploadResult.SecureUrl.ToString(),
@@ -249,7 +259,7 @@ namespace FinalAPIDoAn.Controllers
                         var uploadResult = await UploadImageToCloudinary(image, product.ProductId);
                         if (uploadResult != null)
                         {
-                            _db.ProductImages.Add(new ProductImage
+                            _dbc.ProductImages.Add(new ProductImage
                             {
                                 ProductId = product.ProductId,
                                 ImageUrl = uploadResult.SecureUrl.ToString(),
@@ -262,7 +272,7 @@ namespace FinalAPIDoAn.Controllers
                     }
                 }
 
-                await _db.SaveChangesAsync();
+                await _dbc.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return Ok(new { data = product });
@@ -278,11 +288,11 @@ namespace FinalAPIDoAn.Controllers
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            using var transaction = await _db.Database.BeginTransactionAsync();
+            using var transaction = await _dbc.Database.BeginTransactionAsync();
             try
             {
                 // Lấy sản phẩm cần xoá kèm theo các ảnh liên quan (nếu có)
-                var product = await _db.Products
+                var product = await _dbc.Products
                     .Include(p => p.ProductImages)
                     .FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -290,10 +300,10 @@ namespace FinalAPIDoAn.Controllers
                     return NotFound(new { message = "Product not found." });
 
                 // Xoá các ProductDiscount liên kết với sản phẩm này
-                var productDiscounts = _db.ProductDiscounts.Where(pd => pd.ProductId == id).ToList();
+                var productDiscounts = _dbc.ProductDiscounts.Where(pd => pd.ProductId == id).ToList();
                 if (productDiscounts.Any())
                 {
-                    _db.ProductDiscounts.RemoveRange(productDiscounts);
+                    _dbc.ProductDiscounts.RemoveRange(productDiscounts);
                 }
 
                 // Xoá các ảnh sản phẩm (với ví dụ xoá trên Cloudinary)
@@ -304,7 +314,7 @@ namespace FinalAPIDoAn.Controllers
                         try
                         {
                             await DeleteImageFromCloudinary(image.PublicId);
-                            _db.ProductImages.Remove(image);
+                            _dbc.ProductImages.Remove(image);
                         }
                         catch (Exception ex)
                         {
@@ -315,8 +325,8 @@ namespace FinalAPIDoAn.Controllers
                 }
 
                 // Cuối cùng xoá sản phẩm
-                _db.Products.Remove(product);
-                await _db.SaveChangesAsync();
+                _dbc.Products.Remove(product);
+                await _dbc.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return Ok(new { message = "Product data deleted successfully." });
@@ -335,14 +345,14 @@ namespace FinalAPIDoAn.Controllers
         {
             try
             {
-                var product = await _db.Products.FindAsync(productId);
+                var product = await _dbc.Products.FindAsync(productId);
                 if (product == null)
                 {
                     return NotFound("Product not found");
                 }
 
                 var uploadResults = new List<ProductImage>();
-                var currentMaxOrder = await _db.ProductImages
+                var currentMaxOrder = await _dbc.ProductImages
                     .Where(pi => pi.ProductId == productId)
                     .MaxAsync(pi => (int?)pi.ImageOrder) ?? 0;
 
@@ -361,12 +371,12 @@ namespace FinalAPIDoAn.Controllers
                             CreatedAt = DateTime.UtcNow
                         };
 
-                        _db.ProductImages.Add(image);
+                        _dbc.ProductImages.Add(image);
                         uploadResults.Add(image);
                     }
                 }
 
-                await _db.SaveChangesAsync();
+                await _dbc.SaveChangesAsync();
                 return Ok(uploadResults);
             }
             catch (Exception ex)
@@ -382,7 +392,7 @@ namespace FinalAPIDoAn.Controllers
         {
             try
             {
-                var image = await _db.ProductImages
+                var image = await _dbc.ProductImages
                     .FirstOrDefaultAsync(pi => pi.ImageId == imageId && pi.ProductId == productId);
 
                 if (image == null)
@@ -391,8 +401,8 @@ namespace FinalAPIDoAn.Controllers
                 }
 
                 await DeleteImageFromCloudinary(image.PublicId);
-                _db.ProductImages.Remove(image);
-                await _db.SaveChangesAsync();
+                _dbc.ProductImages.Remove(image);
+                await _dbc.SaveChangesAsync();
 
                 return NoContent();
             }
