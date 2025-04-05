@@ -197,8 +197,58 @@ namespace FinalAPIDoAn.Controllers
             await _dbc.SaveChangesAsync();
             return Ok(new { message = "Role assigned successfully!" });
         }
+        // PUT: api/account/change-password
+        [HttpPut("change-password")]
+        public IActionResult ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Find the user by their ID.
+            var user = _dbc.Users.SingleOrDefault(u => u.UserId == dto.UserId);
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            // Verify the old password against the stored hashed password.
+            if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.PasswordHash))
+            {
+                return BadRequest(new { message = "Old password is incorrect." });
+            }
+
+            // Validate that the new password and its confirmation match.
+            if (dto.NewPassword != dto.ConfirmNewPassword)
+            {
+                return BadRequest(new { message = "New password and confirmation do not match." });
+            }
+
+            // Update the user's password by hashing the new password.
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            _dbc.Users.Update(user);
+            _dbc.SaveChanges();
+
+            return Ok(new { message = "Password changed successfully." });
+        }
     }
 
+    public class ChangePasswordDto
+    {
+        [Required]
+        public int UserId { get; set; }
+
+        [Required]
+        public string OldPassword { get; set; }
+
+        [Required]
+        [MinLength(6, ErrorMessage = "New password must be at least 6 characters long.")]
+        public string NewPassword { get; set; }
+
+        [Required]
+        public string ConfirmNewPassword { get; set; }
+    }
     // DTO cho User Management
     public class UserDto
     {
@@ -255,3 +305,6 @@ namespace FinalAPIDoAn.Controllers
         public required string Role { get; set; }
     }
 }
+
+   
+
