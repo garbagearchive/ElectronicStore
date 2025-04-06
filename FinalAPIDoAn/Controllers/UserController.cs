@@ -1,310 +1,172 @@
-﻿using FinalAPIDoAn.Data;
-using FinalAPIDoAn.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using BCrypt.Net;
+using FinalAPIDoAn.Models; // << Đảm bảo namespace này chứa KetNoiCSDL và User model
+using FinalAPIDoAn.Models.DTOs; // Namespace chứa DTOs
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Linq;
+using System;
+using FinalAPIDoAn.Data;
+// using Microsoft.AspNetCore.Authorization;
+// using System.Security.Claims;
 
 namespace FinalAPIDoAn.Controllers
 {
-    [Route("api/account")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class UserController : ControllerBase
     {
-        private readonly KetNoiCSDL _dbc;
-        private readonly AuthService _authService;
+        private readonly KetNoiCSDL _dbc; // Sử dụng DbContext của bạn
+        // private readonly ITokenService _tokenService;
 
-        public AccountController(KetNoiCSDL dbc, AuthService authService)
+        public UserController(KetNoiCSDL dbContext /*, ITokenService tokenService */)
         {
-            _dbc = dbc;
-            _authService = authService;
+            _dbc = dbContext;
+            // _tokenService = tokenService;
         }
 
-        // -------------------- User Management Endpoints --------------------
+        // --- Hashing Helpers ---
+        private string HashPassword(string password) => BCrypt.Net.BCrypt.HashPassword(password);
+        private bool VerifyPassword(string password, string hashedPassword) { try { return BCrypt.Net.BCrypt.Verify(password, hashedPassword); } catch { return false; } }
+        // --- End Hashing Helpers ---
 
-        [HttpGet("List")]
-        public IActionResult GetAllUserDetails()
+        // POST: api/User/register
+        [HttpPost("register")]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Register(UserRegisterDto registerDto)
         {
-            var users = _dbc.Users.ToList();
-            return Ok(new { data = users });
-        }
+            if (await _dbc.Users.AnyAsync(u => u.Username == registerDto.Username)) return BadRequest("Username đã tồn tại.");
+            if (await _dbc.Users.AnyAsync(u => u.Email == registerDto.Email)) return BadRequest("Email đã tồn tại.");
 
-        [HttpGet("Search")]
-        public IActionResult SearchName([FromQuery] string keyword)
-        {
-            if (string.IsNullOrWhiteSpace(keyword))
-                return BadRequest(new { message = "Invalid search keyword" });
-
-            var results = _dbc.Users.Where(s => s.FullName.Contains(keyword)).ToList();
-
-            if (!results.Any())
-                return NotFound(new { message = "No user found matching the keyword." });
-
-            return Ok(new { data = results });
-        }
-
-        [HttpGet("Get/{id}")]
-        public IActionResult GetUserById(int id)
-        {
-            var user = _dbc.Users.SingleOrDefault(u => u.UserId == id);
-            if (user == null)
-                return NotFound(new { message = "User not found." });
-
-            return Ok(new { data = user });
-        }
-
-        [HttpPut("Update/{id}")]
-        public IActionResult UpdateUser(int id, [FromBody] UserDto userDto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var user = _dbc.Users.SingleOrDefault(o => o.UserId == id);
-            if (user == null)
-                return NotFound(new { message = "User not found." });
-
-            user.Username = userDto.Username;
-            user.PasswordHash = userDto.PasswordHash;
-            user.FullName = userDto.FullName;
-            user.Email = userDto.Email;
-            user.Phone = userDto.Phone;
-            user.Address = userDto.Address;
-            user.Role = userDto.Role ?? "Buyer";
-
-            _dbc.Users.Update(user);
-            _dbc.SaveChanges();
-
-            return Ok(new { message = "User updated successfully.", data = user });
-        }
-
-        [HttpDelete("Delete/{id}")]
-        public IActionResult DeleteUser(int id)
-        {
-            using var transaction = _dbc.Database.BeginTransaction();
-            try
+            var user = new User
             {
-                var user = _dbc.Users.SingleOrDefault(o => o.UserId == id);
-                if (user == null)
-                    return NotFound(new { message = "User not found." });
-
-                // Xoá ShoppingCart
-                var userCartItems = _dbc.ShoppingCarts.Where(c => c.UserId == id).ToList();
-                if (userCartItems.Any())
-                {
-                    _dbc.ShoppingCarts.RemoveRange(userCartItems);
-                }
-
-                // Xoá Orders và dữ liệu liên quan
-                var userOrders = _dbc.Orders.Where(o => o.UserId == id).ToList();
-                if (userOrders.Any())
-                {
-                    var orderIds = userOrders.Select(o => o.OrderId).ToList();
-                    var orderDetails = _dbc.OrderDetails.Where(od => orderIds.Contains(od.OrderId)).ToList();
-                    if (orderDetails.Any()) _dbc.OrderDetails.RemoveRange(orderDetails);
-
-                    var payments = _dbc.Payments.Where(p => orderIds.Contains(p.OrderId)).ToList();
-                    if (payments.Any()) _dbc.Payments.RemoveRange(payments);
-
-                    var shippings = _dbc.Shippings.Where(s => orderIds.Contains(s.OrderId)).ToList();
-                    if (shippings.Any()) _dbc.Shippings.RemoveRange(shippings);
-
-                    _dbc.Orders.RemoveRange(userOrders);
-                }
-
-                // Xoá ProductReviews
-                var userReviews = _dbc.ProductReviews.Where(o => o.UserId == id).ToList();
-                if (userReviews.Any()) _dbc.ProductReviews.RemoveRange(userReviews);
-
-                // Xoá ProductRepairs
-                var userRepairs = _dbc.ProductRepairs.Where(o => o.UserId == id).ToList();
-                if (userRepairs.Any()) _dbc.ProductRepairs.RemoveRange(userRepairs);
-
-                _dbc.Users.Remove(user);
-                _dbc.SaveChanges();
-                transaction.Commit();
-
-                return Ok(new { message = "User and related data deleted successfully." });
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-                return StatusCode(500, new { message = "Internal server error.", error = ex.Message });
-            }
-        }
-
-        // -------------------- Authentication Endpoints --------------------
-
-        // Sử dụng endpoint Register thay cho "Add" để tạo người dùng mới
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
-        {
-            if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
-            {
-                return BadRequest("Username and password are required.");
-            }
-
-            var existingUser = await _dbc.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-            if (existingUser != null)
-            {
-                return Conflict("Username already exists.");
-            }
-
-            // Mã hóa mật khẩu
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-            var newUser = new User
-            {
-                Username = request.Username,
-                PasswordHash = hashedPassword,
-                FullName = request.FullName,
-                Email = request.Email,
-                Phone = request.Phone,
-                Address = request.Address,
-                Role = request.Role ?? "Buyer",
-                CreatedAt = DateTime.UtcNow
+                Username = registerDto.Username,
+                PasswordHash = HashPassword(registerDto.Password),
+                FullName = registerDto.FullName,
+                Email = registerDto.Email,
+                Phone = registerDto.Phone,
+                Address = registerDto.Address,
+                // Role sẽ tự động lấy giá trị DEFAULT 'Customer' từ DB nếu bạn không gán
+                // Hoặc bạn có thể gán tường minh nếu muốn: Role = "Customer",
+                // CreatedAt sẽ tự động lấy giá trị DEFAULT GETDATE() từ DB nếu không gán
             };
 
-            _dbc.Users.Add(newUser);
+            _dbc.Users.Add(user);
             await _dbc.SaveChangesAsync();
 
-            return Ok(new { Message = "User registered successfully!" });
+            // Lấy lại thông tin user vừa tạo (bao gồm cả giá trị default từ DB nếu có)
+            var createdUser = await _dbc.Users.FindAsync(user.UserId); // Đọc lại để lấy giá trị default nếu cần
+
+            var userDto = new UserDto
+            {
+                UserId = createdUser.UserId,
+                Username = createdUser.Username,
+                FullName = createdUser.FullName,
+                Email = createdUser.Email,
+                Phone = createdUser.Phone,
+                Address = createdUser.Address,
+                Role = createdUser.Role, // Lấy giá trị Role thực tế từ DB
+                CreatedAt = createdUser.CreatedAt // Lấy giá trị CreatedAt thực tế từ DB
+            };
+
+            return CreatedAtAction(nameof(GetUserById), new { id = user.UserId }, userDto);
         }
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromQuery] string username, [FromQuery] string password)
+        // POST: api/User/login
+        [HttpPost("login")]
+        [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)] // Hoặc UserDto
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Login(UserLoginDto loginDto)
         {
-            var token = await _authService.Login(username, password);
-            if (token == null)
-            {
-                return Unauthorized();
-            }
-            return Ok(new { Token = token });
+            var user = await _dbc.Users.FirstOrDefaultAsync(u => u.Username == loginDto.Username);
+            if (user == null || !VerifyPassword(loginDto.Password, user.PasswordHash)) return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
+
+            // --- Tạo Token ---
+            // var token = _tokenService.CreateToken(user);
+            // --- End Tạo Token ---
+
+            var userDto = new UserDto { /* Map properties */ UserId = user.UserId, Username = user.Username, FullName = user.FullName, Email = user.Email, Phone = user.Phone, Address = user.Address, Role = user.Role, CreatedAt = user.CreatedAt };
+
+            // return Ok(new LoginResponseDto { User = userDto, Token = token });
+            return Ok(userDto);
         }
 
-        [HttpPost("AssignRoles")]
-        public async Task<IActionResult> AssignRoles([FromBody] AssignRoleRequest request)
+        // GET: api/User
+        // [Authorize(Roles = "Admin")] // Ví dụ phân quyền
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
-            var user = await _dbc.Users.FirstOrDefaultAsync(u => u.UserId == request.UserId);
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
-            if (string.IsNullOrEmpty(request.Role))
-            {
-                return BadRequest("Role is required");
-            }
-            user.Role = request.Role;
-            await _dbc.SaveChangesAsync();
-            return Ok(new { message = "Role assigned successfully!" });
+            var users = await _dbc.Users
+                                    .Select(user => new UserDto { /* Map properties */ UserId = user.UserId, Username = user.Username, FullName = user.FullName, Email = user.Email, Phone = user.Phone, Address = user.Address, Role = user.Role, CreatedAt = user.CreatedAt })
+                                    .ToListAsync();
+            return Ok(users);
         }
-        // PUT: api/account/change-password
+
+        // GET: api/User/{id}
+        // [Authorize]
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserDto>> GetUserById(int id)
+        {
+            var user = await _dbc.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            var userDto = new UserDto { /* Map properties */ UserId = user.UserId, Username = user.Username, FullName = user.FullName, Email = user.Email, Phone = user.Phone, Address = user.Address, Role = user.Role, CreatedAt = user.CreatedAt };
+            return Ok(userDto);
+        }
+
+        // PUT: api/User/change-password
+        // [Authorize]
         [HttpPut("change-password")]
-        public IActionResult ChangePassword([FromBody] ChangePasswordDto dto)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var userIdString = "1"; // <<< !!! Lấy User ID từ context (ví dụ: Token)
+                                    // var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdString == null || !int.TryParse(userIdString, out var userId)) return Unauthorized();
 
-            // Find the user by their ID.
-            var user = _dbc.Users.SingleOrDefault(u => u.UserId == dto.UserId);
-            if (user == null)
-            {
-                return NotFound(new { message = "User not found." });
-            }
+            var user = await _dbc.Users.FindAsync(userId);
+            if (user == null) return NotFound("Không tìm thấy tài khoản.");
+            if (!VerifyPassword(changePasswordDto.OldPassword, user.PasswordHash)) return BadRequest("Mật khẩu cũ không đúng.");
 
-            // Verify the old password against the stored hashed password.
-            if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.PasswordHash))
-            {
-                return BadRequest(new { message = "Old password is incorrect." });
-            }
+            user.PasswordHash = HashPassword(changePasswordDto.NewPassword);
+            _dbc.Entry(user).State = EntityState.Modified;
+            await _dbc.SaveChangesAsync();
 
-            // Validate that the new password and its confirmation match.
-            if (dto.NewPassword != dto.ConfirmNewPassword)
-            {
-                return BadRequest(new { message = "New password and confirmation do not match." });
-            }
-
-            // Update the user's password by hashing the new password.
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
-            _dbc.Users.Update(user);
-            _dbc.SaveChanges();
-
-            return Ok(new { message = "Password changed successfully." });
+            return NoContent();
         }
-    }
 
-    public class ChangePasswordDto
-    {
-        [Required]
-        public int UserId { get; set; }
 
-        [Required]
-        public string OldPassword { get; set; }
+        // DELETE: api/User/{id}
+        // [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _dbc.Users.FindAsync(id);
+            if (user == null) return NotFound();
 
-        [Required]
-        [MinLength(6, ErrorMessage = "New password must be at least 6 characters long.")]
-        public string NewPassword { get; set; }
-
-        [Required]
-        public string ConfirmNewPassword { get; set; }
-    }
-    // DTO cho User Management
-    public class UserDto
-    {
-        [Required]
-        public required string Username { get; set; }
-
-        [Required]
-        public required string PasswordHash { get; set; }
-
-        [Required]
-        public required string FullName { get; set; }
-
-        [Required]
-        public required string Email { get; set; }
-
-        [Required]
-        public required string Phone { get; set; }
-
-        [Required]
-        public required string Address { get; set; }
-
-        public string? Role { get; set; }
-    }
-
-    // DTO cho Register (Authentication)
-    public class RegisterRequest
-    {
-        [Required]
-        public required string Username { get; set; }
-
-        [Required]
-        public required string Password { get; set; }
-
-        [Required]
-        public required string FullName { get; set; }
-
-        [Required]
-        public required string Email { get; set; }
-
-        [Required]
-        public required string Phone { get; set; }
-
-        [Required]
-        public required string Address { get; set; }
-
-        public string? Role { get; set; }
-    }
-
-    // DTO cho AssignRoles
-    public class AssignRoleRequest
-    {
-        public int UserId { get; set; }
-        [Required]
-        public required string Role { get; set; }
+            // Lưu ý: Schema mới không có ON DELETE CASCADE cho FK từ Orders, Reviews,... đến Users.
+            // Việc xóa User có thể gây lỗi nếu có dữ liệu liên quan trong các bảng khác.
+            // Cần xử lý dữ liệu liên quan trước khi xóa User hoặc cấu hình lại FK trong DB.
+            try
+            {
+                _dbc.Users.Remove(user);
+                await _dbc.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException ex) // Bắt lỗi FK Constraint
+            {
+                // Log lỗi (ex)
+                return BadRequest("Không thể xóa người dùng này vì có dữ liệu liên quan (ví dụ: đơn hàng, đánh giá...). Hãy xử lý dữ liệu liên quan trước.");
+            }
+        }
     }
 }
-
-   
-
