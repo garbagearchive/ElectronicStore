@@ -118,55 +118,167 @@ namespace FinalAPIDoAn.Controllers
             return Ok(userDto);
         }
 
-        // PUT: api/User/change-password
-        // [Authorize]
-        [HttpPut("change-password")]
+        // PUT: api/User/{userId}/change-password
+        /// <summary>
+        /// Đổi mật khẩu cho một người dùng cụ thể dựa vào ID.
+        /// YÊU CẦU QUYỀN ADMIN.
+        /// </summary>
+        /// <param name="userId">ID của người dùng cần đổi mật khẩu.</param>
+        /// <param name="changePasswordDto">Thông tin mật khẩu cũ và mới.</param>
+        /// <response code="204">Đổi mật khẩu thành công.</response>
+        /// <response code="400">Mật khẩu cũ không đúng hoặc dữ liệu không hợp lệ.</response>
+        /// <response code="401">Chưa xác thực (nếu dùng [Authorize]).</response>
+        /// <response code="403">Không có quyền truy cập (ví dụ: không phải Admin).</response>
+        /// <response code="404">Không tìm thấy người dùng với ID cung cấp.</response>
+        /// <response code="500">Lỗi server.</response>
+        [HttpPut("{userId:int}/change-password")] // <-- Route đã bao gồm userId
+        // [Authorize(Roles = "Admin")] // <<< --- CỰC KỲ QUAN TRỌNG: Phải thêm phân quyền ở đây
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)] // Nếu [Authorize] được dùng
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]     // Nếu user được xác thực nhưng không phải Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ChangePassword([FromRoute] int userId, [FromBody] ChangePasswordDto changePasswordDto) // <-- Nhận userId từ route
         {
-            var userIdString = "1"; // <<< !!! Lấy User ID từ context (ví dụ: Token)
-                                    // var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdString == null || !int.TryParse(userIdString, out var userId)) return Unauthorized();
+            // Không cần lấy userId từ context nữa
 
-            var user = await _dbc.Users.FindAsync(userId);
-            if (user == null) return NotFound("Không tìm thấy tài khoản.");
-            if (!VerifyPassword(changePasswordDto.OldPassword, user.PasswordHash)) return BadRequest("Mật khẩu cũ không đúng.");
+            var user = await _dbc.Users.FindAsync(userId); // <-- Tìm user bằng userId từ route
 
+            if (user == null)
+            {
+                return NotFound($"Không tìm thấy tài khoản với ID: {userId}.");
+            }
+
+            // *** LƯU Ý QUAN TRỌNG VỀ OldPassword ***
+            // Nếu chức năng này dành cho Admin đặt lại mật khẩu (reset), Admin sẽ không biết OldPassword.
+            // Trong trường hợp đó, bạn nên BỎ qua bước kiểm tra VerifyPassword này.
+            // Nếu bạn muốn giữ check này, nó chỉ phù hợp khi user TỰ đổi mk VÀ endpoint này yêu cầu xác thực đúng user đó.
+            if (!VerifyPassword(changePasswordDto.OldPassword, user.PasswordHash))
+            {
+                // Xem xét lại logic này nếu là Admin reset password
+                return BadRequest("Mật khẩu cũ không đúng.");
+            }
+            // *** HẾT LƯU Ý ***
+
+            // Cập nhật mật khẩu mới đã được hash
             user.PasswordHash = HashPassword(changePasswordDto.NewPassword);
-            _dbc.Entry(user).State = EntityState.Modified;
-            await _dbc.SaveChangesAsync();
+            _dbc.Entry(user).State = EntityState.Modified; // Đánh dấu entity là đã thay đổi
 
+            try
+            {
+                await _dbc.SaveChangesAsync(); // Lưu thay đổi vào database
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Xử lý trường hợp lỗi tương tranh (concurrency exception) nếu cần
+                if (!await UserExists(userId)) // Kiểm tra lại xem user còn tồn tại không
+                {
+                    return NotFound($"Tài khoản với ID: {userId} không còn tồn tại (có thể đã bị xóa).");
+                }
+                else
+                {
+                    // Ghi log lỗi tương tranh và ném lại lỗi hoặc trả về lỗi 500
+                    // _logger.LogWarning("Lỗi tương tranh khi cập nhật mật khẩu cho user ID {UserId}", userId);
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi tương tranh khi cập nhật dữ liệu.");
+                }
+            }
+            catch (Exception ex) // Bắt các lỗi khác khi lưu DB
+            {
+                // Log lỗi chi tiết (ex)
+                // _logger.LogError(ex, "Lỗi không xác định khi đổi mật khẩu cho user ID {UserId}", userId);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Đã xảy ra lỗi phía server khi đổi mật khẩu.");
+            }
+
+            // Nếu mọi thứ thành công, trả về 204 No Content
             return NoContent();
         }
 
+        // Hàm helper để kiểm tra user tồn tại (có thể dùng trong xử lý lỗi tương tranh)
+        private async Task<bool> UserExists(int id)
+        {
+            return await _dbc.Users.AnyAsync(e => e.UserId == id);
+        }
 
-        // DELETE: api/User/{id}
-        // [Authorize(Roles = "Admin")]
+        // ... các actions khác ...
+
+
+        /// <summary>
+        /// Xóa một tài khoản và tất cả dữ liệu liên quan (Orders, Reviews, Cart, Repairs).
+        /// Yêu cầu xử lý xóa dữ liệu liên quan trong code vì DB không có ON DELETE CASCADE.
+        /// </summary>
+        // [Authorize(Roles = "Admin")] // Nên có phân quyền Admin
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)] // Thêm response cho lỗi khác
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _dbc.Users.FindAsync(id);
-            if (user == null) return NotFound();
+            // Bước 1: Tải User và các dữ liệu liên quan cần xóa cùng
+            // Sử dụng Include và ThenInclude để tải dữ liệu cần thiết
+            var userToDelete = await _dbc.Users
+                .Include(u => u.Orders)         // Tải các Orders của User
+                    .ThenInclude(o => o.OrderDetails) // Tải OrderDetails của từng Order đó
+                .Include(u => u.ProductReviews) // Tải các ProductReviews của User (ReviewImages sẽ cascade từ đây)
+                .Include(u => u.ProductRepairs) // Tải các ProductRepairs của User
+                .Include(u => u.ShoppingCarts) // Tải các ShoppingCart items của User
+                .FirstOrDefaultAsync(u => u.UserId == id); // Tìm User theo ID
 
-            // Lưu ý: Schema mới không có ON DELETE CASCADE cho FK từ Orders, Reviews,... đến Users.
-            // Việc xóa User có thể gây lỗi nếu có dữ liệu liên quan trong các bảng khác.
-            // Cần xử lý dữ liệu liên quan trước khi xóa User hoặc cấu hình lại FK trong DB.
+            if (userToDelete == null)
+            {
+                return NotFound($"Không tìm thấy người dùng với ID: {id}");
+            }
+
+            // Sử dụng try-catch để bắt các lỗi không mong muốn trong quá trình xóa phức tạp này
             try
             {
-                _dbc.Users.Remove(user);
+                // Bước 2: Xóa dữ liệu liên quan TRƯỚC KHI xóa User
+
+                // 2.1. Xóa OrderDetails trước (vì OrderDetails -> Orders không cascade)
+                // Lặp qua từng Order của User và xóa OrderDetails của Order đó
+                foreach (var order in userToDelete.Orders)
+                {
+                    // Kiểm tra xem OrderDetails đã được load chưa (phòng trường hợp Include lỗi)
+                    if (order.OrderDetails != null && order.OrderDetails.Any())
+                    {
+                        _dbc.OrderDetails.RemoveRange(order.OrderDetails);
+                    }
+                }
+                // 2.2. Xóa Orders của User
+                if (userToDelete.Orders.Any())
+                    _dbc.Orders.RemoveRange(userToDelete.Orders);
+
+                // 2.3. Xóa ProductReviews của User (ReviewImages sẽ tự động cascade theo schema)
+                if (userToDelete.ProductReviews.Any())
+                    _dbc.ProductReviews.RemoveRange(userToDelete.ProductReviews);
+
+                // 2.4. Xóa ProductRepairs của User
+                if (userToDelete.ProductRepairs.Any())
+                    _dbc.ProductRepairs.RemoveRange(userToDelete.ProductRepairs);
+
+                // 2.5. Xóa ShoppingCart items của User
+                if (userToDelete.ShoppingCarts.Any())
+                    _dbc.ShoppingCarts.RemoveRange(userToDelete.ShoppingCarts);
+
+                // Bước 3: Xóa chính User đó
+                _dbc.Users.Remove(userToDelete);
+
+                // Bước 4: Lưu tất cả các thay đổi vào DB trong một transaction
                 await _dbc.SaveChangesAsync();
-                return NoContent();
+
+                // Trả về thành công nếu không có lỗi
+                return NoContent(); // 204 No Content - Xóa thành công
             }
-            catch (DbUpdateException ex) // Bắt lỗi FK Constraint
+            catch (Exception ex) // Bắt các lỗi khác có thể xảy ra
             {
-                // Log lỗi (ex)
-                return BadRequest("Không thể xóa người dùng này vì có dữ liệu liên quan (ví dụ: đơn hàng, đánh giá...). Hãy xử lý dữ liệu liên quan trước.");
+                // Log lỗi chi tiết lại (sử dụng một thư viện logging như Serilog, NLog...)
+                // Ví dụ: _logger.LogError(ex, "Lỗi khi xóa người dùng ID {UserId} và dữ liệu liên quan.", id);
+
+                // Trả về lỗi Server Error cho client
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Đã xảy ra lỗi khi xóa người dùng và dữ liệu liên quan: {ex.Message}");
             }
         }
+
+        // ... các hàm helper khác nếu có ...
     }
 }
