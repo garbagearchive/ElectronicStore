@@ -213,7 +213,7 @@ namespace FinalAPIDoAn.Controllers
             }
 
             // Find the user by their ID.
-            var user = _dbc.Users.SingleOrDefault(u => u.UserId == dto.UserId);
+            var user = _dbc.Users.SingleOrDefault(u => u.Username == dto.Username);
             if (user == null)
             {
                 return NotFound(new { message = "User not found." });
@@ -243,7 +243,7 @@ namespace FinalAPIDoAn.Controllers
     public class ChangePasswordDto
     {
         [Required]
-        public int UserId { get; set; }
+        public string Username { get; set; }
 
         [Required]
         public string OldPassword { get; set; }
