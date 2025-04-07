@@ -178,11 +178,12 @@
 
             <div class="tab-pane fade" id="change-password-tab-pane" role="tabpanel" aria-labelledby="change-password-tab" tabindex="0">
                 <h2>Change Password</h2>
-                <div id="change-password-message" class="alert d-none"></div> <form id="changePasswordForm">
+                <div id="change-password-message" class="alert d-none"></div>
+                <form id="changePasswordForm">
                     <div class="mb-3">
-                        <label for="changePassUserId" class="form-label">User ID <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="changePassUserId" placeholder="Enter your User ID" required>
-                        <small class="form-text text-muted">Enter the ID of the user whose password you want to change.</small>
+                        <label for="changePassUsername" class="form-label">Username <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="changePassUsername" placeholder="Enter your Username" required>
+                        <small class="form-text text-muted">Enter the username of the user whose password you want to change.</small>
                     </div>
                     <div class="mb-3">
                         <label for="changePassOld" class="form-label">Old Password <span class="text-danger">*</span></label>
@@ -237,6 +238,14 @@
 
                 if (!username || !password) {
                     showMessage('login', 'Please enter both username/email and password.');
+                    return;
+                }
+
+                // *** ĐOẠN NÀY KIỂM TRA TÀI KHOẢN ADMIN CỨNG ***
+                if (username === "AdminMaster" && password === "123456789") {
+                    localStorage.setItem('authToken', 'special-admin-token'); // Có thể dùng token giả nếu cần
+                    localStorage.setItem('userRole', 'admin');
+                    window.location.href = 'admin.html';
                     return;
                 }
 
@@ -355,14 +364,13 @@
                 e.preventDefault();
                 hideMessages();
 
-                const userId = parseInt($('#changePassUserId').val(), 10); // Chuyển sang số nguyên
+                const username = $('#changePassUsername').val().trim(); // Changed from UserId
                 const oldPassword = $('#changePassOld').val();
                 const newPassword = $('#changePassNew').val();
                 const confirmNewPassword = $('#changePassConfirm').val();
 
-
-                if (isNaN(userId) || userId <= 0) {
-                    showMessage('change-password', 'Please enter a valid User ID.');
+                if (!username) { // Changed from UserId
+                    showMessage('change-password', 'Please enter a valid Username.');
                     return;
                 }
                 if (!oldPassword || !newPassword || !confirmNewPassword) {
@@ -376,12 +384,11 @@
                 // Thêm validation độ dài newPassword nếu cần
 
                 const requestBody = {
-                    userId: userId,
+                    username: username, // Changed from UserId
                     oldPassword: oldPassword,
                     newPassword: newPassword,
                     confirmNewPassword: confirmNewPassword
                 };
-
                 const changePasswordUrl = `${API_BASE_URL}/change-password`;
 
                 try {
@@ -390,7 +397,6 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(requestBody)
                     });
-
                     // Backend trả về 200 OK kèm message hoặc 204 No Content
                     if (response.ok) {
                         let successMsg = 'Password changed successfully!';
@@ -406,7 +412,8 @@
                     } else {
                         let errorMsg = `Password change failed. Status: ${response.status}`;
                         try {
-                            const errorData = await response.json(); // Đọc lỗi từ backend
+                            const errorData = await response.json();
+                            // Đọc lỗi từ backend
                             errorMsg = `Password change failed: ${errorData.message || 'Check input data.'}`;
                         } catch (jsonError) { /* Ignore if response is not json */ }
                         console.error("Change Password Error:", response.status, await response.text());
