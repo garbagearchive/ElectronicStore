@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="DiscountManager.html" class="active">Discount Management</a>
+        <a href="ProductDiscountManager.html">Product Discounts</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Discount Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Discounts</h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addDiscountModal">Add Discount</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Percentage</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="discountTableBody">
+                        <!-- Discounts will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Discount Modal -->
+        <div class="modal fade" id="addDiscountModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Discount</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addDiscountForm">
+                            <div class="mb-3">
+                                <label for="discountCode" class="form-label">Discount Code</label>
+                                <input type="text" class="form-control" id="discountCode" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="discountDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="discountDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="discountPercentage" class="form-label">Percentage</label>
+                                <input type="number" class="form-control" id="discountPercentage" min="1" max="100" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">Start Date</label>
+                                <input type="datetime-local" class="form-control" id="startDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">End Date</label>
+                                <input type="datetime-local" class="form-control" id="endDate" required>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="isActive" checked>
+                                <label class="form-check-label" for="isActive">Active</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Discount</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Discount Modal -->
+        <div class="modal fade" id="editDiscountModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Discount</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editDiscountForm">
+                            <input type="hidden" id="editDiscountId">
+                            <div class="mb-3">
+                                <label for="editDiscountCode" class="form-label">Discount Code</label>
+                                <input type="text" class="form-control" id="editDiscountCode" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editDiscountDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="editDiscountDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editDiscountPercentage" class="form-label">Percentage</label>
+                                <input type="number" class="form-control" id="editDiscountPercentage" min="1" max="100" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editStartDate" class="form-label">Start Date</label>
+                                <input type="datetime-local" class="form-control" id="editStartDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editEndDate" class="form-label">End Date</label>
+                                <input type="datetime-local" class="form-control" id="editEndDate" required>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="editIsActive">
+                                <label class="form-check-label" for="editIsActive">Active</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/Discounts';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load discounts on page load
+            loadDiscounts();
+
+            // Add discount form submission
+            $('#addDiscountForm').submit(function(e) {
+                e.preventDefault();
+                addDiscount();
+            });
+
+            // Edit discount form submission
+            $('#editDiscountForm').submit(function(e) {
+                e.preventDefault();
+                updateDiscount();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadDiscounts() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        populateDiscountTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Failed to load discounts: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function populateDiscountTable(discounts) {
+                const tableBody = $('#discountTableBody');
+                tableBody.empty();
+
+                if (discounts.length === 0) {
+                    tableBody.append('<tr><td colspan="8" class="text-center">No discounts found</td></tr>');
+                    return;
+                }
+
+                discounts.forEach(discount => {
+                    const row = `
+                        <tr>
+                            <td>${discount.discountId}</td>
+                            <td>${discount.discountCode}</td>
+                            <td>${discount.description || ''}</td>
+                            <td>${discount.discountPercentage}%</td>
+                            <td>${new Date(discount.startDate).toLocaleString()}</td>
+                            <td>${new Date(discount.endDate).toLocaleString()}</td>
+                            <td>${discount.isActive ? 'Yes' : 'No'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${discount.discountId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${discount.discountId}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const discountId = $(this).data('id');
+                    editDiscount(discountId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const discountId = $(this).data('id');
+                    deleteDiscount(discountId);
+                });
+            }
+
+            function addDiscount() {
+                const discountData = {
+                    DiscountCode: $('#discountCode').val(),
+                    Description: $('#discountDescription').val(),
+                    DiscountPercentage: parseInt($('#discountPercentage').val()),
+                    StartDate: new Date($('#startDate').val()).toISOString(),
+                    EndDate: new Date($('#endDate').val()).toISOString(),
+                    IsActive: $('#isActive').is(':checked')
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Add`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(discountData),
+                    success: function(response) {
+                        $('#addDiscountModal').modal('hide');
+                        $('#addDiscountForm')[0].reset();
+                        loadDiscounts();
+                        showSuccess('Discount added successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to add discount: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editDiscount(discountId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search/${discountId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const discount = response.data;
+                        $('#editDiscountId').val(discount.discountId);
+                        $('#editDiscountCode').val(discount.discountCode);
+                        $('#editDiscountDescription').val(discount.description || '');
+                        $('#editDiscountPercentage').val(discount.discountPercentage);
+
+                        // Format dates for datetime-local input
+                        const startDate = new Date(discount.startDate);
+                        const endDate = new Date(discount.endDate);
+
+                        $('#editStartDate').val(startDate.toISOString().slice(0, 16));
+                        $('#editEndDate').val(endDate.toISOString().slice(0, 16));
+                        $('#editIsActive').prop('checked', discount.isActive);
+
+                        const modal = new bootstrap.Modal(document.getElementById('editDiscountModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get discount: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updateDiscount() {
+                const discountId = $('#editDiscountId').val();
+                const discountData = {
+                    DiscountCode: $('#editDiscountCode').val(),
+                    Description: $('#editDiscountDescription').val(),
+                    DiscountPercentage: parseInt($('#editDiscountPercentage').val()),
+                    StartDate: new Date($('#editStartDate').val()).toISOString(),
+                    EndDate: new Date($('#editEndDate').val()).toISOString(),
+                    IsActive: $('#editIsActive').is(':checked')
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${discountId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(discountData),
+                    success: function(response) {
+                        $('#editDiscountModal').modal('hide');
+                        loadDiscounts();
+                        showSuccess('Discount updated successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to update discount: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteDiscount(discountId) {
+                if (!confirm('Are you sure you want to delete this discount?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${discountId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        loadDiscounts();
+                        showSuccess('Discount deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete discount: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>

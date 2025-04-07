@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="OrderManager.html">Order Management</a>
+        <a href="#" class="active">Shipping Management</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Shipping Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">All Shipping Records</h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addShippingModal">Add New Shipping</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Shipping ID</th>
+                            <th>Order ID</th>
+                            <th>Shipping Address</th>
+                            <th>Shipping Method</th>
+                            <th>Tracking Number</th>
+                            <th>Estimated Delivery</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shippingTableBody">
+                        <!-- Shipping records will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Shipping Modal -->
+        <div class="modal fade" id="addShippingModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Shipping</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addShippingForm">
+                            <div class="mb-3">
+                                <label for="addOrderId" class="form-label">Order ID</label>
+                                <input type="number" class="form-control" id="addOrderId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addShippingAddress" class="form-label">Shipping Address</label>
+                                <input type="text" class="form-control" id="addShippingAddress" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addShippingMethod" class="form-label">Shipping Method</label>
+                                <input type="text" class="form-control" id="addShippingMethod" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addTrackingNumber" class="form-label">Tracking Number</label>
+                                <input type="text" class="form-control" id="addTrackingNumber" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addEstimatedDelivery" class="form-label">Estimated Delivery Date</label>
+                                <input type="date" class="form-control" id="addEstimatedDelivery" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="addShippingStatus" class="form-label">Status</label>
+                                <select class="form-control" id="addShippingStatus">
+                                    <option value="Delivering">Delivering</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Shipping</button>
+                        </form>
+                        <div id="addShippingResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Shipping Modal -->
+        <div class="modal fade" id="editShippingModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Shipping</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editShippingForm">
+                            <input type="hidden" id="editShippingId">
+                            <div class="mb-3">
+                                <label for="editOrderId" class="form-label">Order ID</label>
+                                <input type="number" class="form-control" id="editOrderId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editShippingAddress" class="form-label">Shipping Address</label>
+                                <input type="text" class="form-control" id="editShippingAddress" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editShippingMethod" class="form-label">Shipping Method</label>
+                                <input type="text" class="form-control" id="editShippingMethod" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editTrackingNumber" class="form-label">Tracking Number</label>
+                                <input type="text" class="form-control" id="editTrackingNumber" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editEstimatedDelivery" class="form-label">Estimated Delivery Date</label>
+                                <input type="date" class="form-control" id="editEstimatedDelivery" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editShippingStatus" class="form-label">Status</label>
+                                <select class="form-control" id="editShippingStatus">
+                                    <option value="Delivering">Delivering</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                        <div id="editShippingResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/shipping';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load all shipping records
+            loadShippings();
+
+            // Add shipping form submission
+            $('#addShippingForm').submit(function(e) {
+                e.preventDefault();
+                addShipping();
+            });
+
+            // Edit shipping form submission
+            $('#editShippingForm').submit(function(e) {
+                e.preventDefault();
+                updateShipping();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadShippings() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        populateShippingTable(response.data);
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Failed to load shipping records: ' + error);
+                    }
+                });
+            }
+
+            function populateShippingTable(shippings) {
+                const tableBody = $('#shippingTableBody');
+                tableBody.empty();
+
+                if (shippings.length === 0) {
+                    tableBody.append('<tr><td colspan="8" class="text-center">No shipping records found</td></tr>');
+                    return;
+                }
+
+                shippings.forEach(shipping => {
+                    const row = `
+                        <tr>
+                            <td>${shipping.shippingId}</td>
+                            <td>${shipping.orderId}</td>
+                            <td>${shipping.shippingAddress}</td>
+                            <td>${shipping.shippingMethod}</td>
+                            <td>${shipping.trackingNumber}</td>
+                            <td>${new Date(shipping.estimatedDeliveryDate).toLocaleDateString()}</td>
+                            <td>${shipping.shippingStatus}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${shipping.shippingId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${shipping.shippingId}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const shippingId = $(this).data('id');
+                    editShipping(shippingId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const shippingId = $(this).data('id');
+                    deleteShipping(shippingId);
+                });
+            }
+
+            function addShipping() {
+                const shippingData = {
+                    OrderId: parseInt($('#addOrderId').val()),
+                    ShippingAddress: $('#addShippingAddress').val(),
+                    ShippingMethod: $('#addShippingMethod').val(),
+                    TrackingNumber: $('#addTrackingNumber').val(),
+                    EstimatedDeliveryDate: $('#addEstimatedDelivery').val(),
+                    ShippingStatus: $('#addShippingStatus').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Add`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(shippingData),
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        $('#addShippingResult').html('<div class="alert alert-success">Shipping record added successfully!</div>');
+                        $('#addShippingForm')[0].reset();
+                        loadShippings();
+                        setTimeout(() => {
+                            $('#addShippingModal').modal('hide');
+                            $('#addShippingResult').empty();
+                        }, 1500);
+                    },
+                    error: function(xhr, status, error) {
+                        $('#addShippingResult').html(`<div class="alert alert-danger">Failed to add shipping record: ${xhr.responseJSON ? xhr.responseJSON.message : error}</div>`);
+                    }
+                });
+            }
+
+            function editShipping(shippingId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search/${shippingId}`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        const shipping = response.data;
+                        $('#editShippingId').val(shipping.shippingId);
+                        $('#editOrderId').val(shipping.orderId);
+                        $('#editShippingAddress').val(shipping.shippingAddress);
+                        $('#editShippingMethod').val(shipping.shippingMethod);
+                        $('#editTrackingNumber').val(shipping.trackingNumber);
+                        $('#editEstimatedDelivery').val(shipping.estimatedDeliveryDate.split('T')[0]);
+                        $('#editShippingStatus').val(shipping.shippingStatus);
+
+                        const modal = new bootstrap.Modal(document.getElementById('editShippingModal'));
+                        modal.show();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Failed to get shipping record: ' + error);
+                    }
+                });
+            }
+
+            function updateShipping() {
+                const shippingId = $('#editShippingId').val();
+                const shippingData = {
+                    OrderId: parseInt($('#editOrderId').val()),
+                    ShippingAddress: $('#editShippingAddress').val(),
+                    ShippingMethod: $('#editShippingMethod').val(),
+                    TrackingNumber: $('#editTrackingNumber').val(),
+                    EstimatedDeliveryDate: $('#editEstimatedDelivery').val(),
+                    ShippingStatus: $('#editShippingStatus').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${shippingId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(shippingData),
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        $('#editShippingResult').html('<div class="alert alert-success">Shipping record updated successfully!</div>');
+                        loadShippings();
+                        setTimeout(() => {
+                            $('#editShippingModal').modal('hide');
+                            $('#editShippingResult').empty();
+                        }, 1500);
+                    },
+                    error: function(xhr, status, error) {
+                        $('#editShippingResult').html(`<div class="alert alert-danger">Failed to update shipping record: ${xhr.responseJSON ? xhr.responseJSON.message : error}</div>`);
+                    }
+                });
+            }
+
+            function deleteShipping(shippingId) {
+                if (!confirm('Are you sure you want to delete this shipping record?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${shippingId}`,
+                    type: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        alert('Shipping record deleted successfully!');
+                        loadShippings();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Failed to delete shipping record: ' + error);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Detail Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="OrderManager.html">Order Management</a>
+        <a href="OrderDetailManager.html" class="active">Order Details</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Order Detail Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Order Details</h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addOrderDetailModal">Add Order Detail</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Detail ID</th>
+                            <th>Order ID</th>
+                            <th>Product ID</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderDetailTableBody">
+                        <!-- Order details will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Order Detail Modal -->
+        <div class="modal fade" id="addOrderDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Order Detail</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addOrderDetailForm">
+                            <div class="mb-3">
+                                <label for="orderId" class="form-label">Order ID</label>
+                                <input type="number" class="form-control" id="orderId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productId" class="form-label">Product ID</label>
+                                <input type="number" class="form-control" id="productId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price</label>
+                                <input type="number" step="0.01" class="form-control" id="price" min="0.01" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Detail</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Order Detail Modal -->
+        <div class="modal fade" id="editOrderDetailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Order Detail</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editOrderDetailForm">
+                            <input type="hidden" id="editOrderDetailId">
+                            <div class="mb-3">
+                                <label for="editOrderId" class="form-label">Order ID</label>
+                                <input type="number" class="form-control" id="editOrderId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductId" class="form-label">Product ID</label>
+                                <input type="number" class="form-control" id="editProductId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editQuantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="editQuantity" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPrice" class="form-label">Price</label>
+                                <input type="number" step="0.01" class="form-control" id="editPrice" min="0.01" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/orders';
+            let authToken = localStorage.getItem('authToken');
+
+            // Get orderId from URL if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+
+            // Load order details on page load
+            if (orderId) {
+                loadOrderDetails(orderId);
+            } else {
+                loadAllOrderDetails();
+            }
+
+            // Add order detail form submission
+            $('#addOrderDetailForm').submit(function(e) {
+                e.preventDefault();
+                addOrderDetail();
+            });
+
+            // Edit order detail form submission
+            $('#editOrderDetailForm').submit(function(e) {
+                e.preventDefault();
+                updateOrderDetail();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadOrderDetails(orderId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/${orderId}/details`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        populateOrderDetailTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Failed to load order details: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function loadAllOrderDetails() {
+                // This would need a different endpoint to get all order details
+                // For now, we'll just show a message
+                $('#orderDetailTableBody').html('<tr><td colspan="6" class="text-center">Please select an order to view details</td></tr>');
+            }
+
+            function populateOrderDetailTable(orderDetails) {
+                const tableBody = $('#orderDetailTableBody');
+                tableBody.empty();
+
+                if (orderDetails.length === 0) {
+                    tableBody.append('<tr><td colspan="6" class="text-center">No order details found</td></tr>');
+                    return;
+                }
+
+                orderDetails.forEach(detail => {
+                    const row = `
+                        <tr>
+                            <td>${detail.orderDetailId}</td>
+                            <td>${detail.orderId}</td>
+                            <td>${detail.productId}</td>
+                            <td>${detail.quantity}</td>
+                            <td>$${detail.price.toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${detail.orderDetailId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${detail.orderDetailId}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const detailId = $(this).data('id');
+                    editOrderDetail(detailId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const detailId = $(this).data('id');
+                    deleteOrderDetail(detailId);
+                });
+            }
+
+            function addOrderDetail() {
+                const orderDetailData = {
+                    OrderID: parseInt($('#orderId').val()),
+                    ProductID: parseInt($('#productId').val()),
+                    Quantity: parseInt($('#quantity').val()),
+                    Price: parseFloat($('#price').val())
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/${orderDetailData.OrderID}/details`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(orderDetailData),
+                    success: function(response) {
+                        $('#addOrderDetailModal').modal('hide');
+                        $('#addOrderDetailForm')[0].reset();
+                        if (orderId) {
+                            loadOrderDetails(orderId);
+                        } else {
+                            loadAllOrderDetails();
+                        }
+                        showSuccess('Order detail added successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to add order detail: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editOrderDetail(detailId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/details/${detailId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const detail = response.data;
+                        $('#editOrderDetailId').val(detail.orderDetailId);
+                        $('#editOrderId').val(detail.orderId);
+                        $('#editProductId').val(detail.productId);
+                        $('#editQuantity').val(detail.quantity);
+                        $('#editPrice').val(detail.price);
+
+                        const modal = new bootstrap.Modal(document.getElementById('editOrderDetailModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get order detail: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updateOrderDetail() {
+                const detailId = $('#editOrderDetailId').val();
+                const orderDetailData = {
+                    OrderID: parseInt($('#editOrderId').val()),
+                    ProductID: parseInt($('#editProductId').val()),
+                    Quantity: parseInt($('#editQuantity').val()),
+                    Price: parseFloat($('#editPrice').val())
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/details/${detailId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(orderDetailData),
+                    success: function(response) {
+                        $('#editOrderDetailModal').modal('hide');
+                        if (orderId) {
+                            loadOrderDetails(orderId);
+                        } else {
+                            loadAllOrderDetails();
+                        }
+                        showSuccess('Order detail updated successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to update order detail: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteOrderDetail(detailId) {
+                if (!confirm('Are you sure you want to delete this order detail?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/details/${detailId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        if (orderId) {
+                            loadOrderDetails(orderId);
+                        } else {
+                            loadAllOrderDetails();
+                        }
+                        showSuccess('Order detail deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete order detail: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>

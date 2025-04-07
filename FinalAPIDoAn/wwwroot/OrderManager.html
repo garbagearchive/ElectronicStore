@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="OrderManager.html" class="active">Order Management</a>
+        <a href="OrderDetailManager.html">Order Details</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Order Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Orders</h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addOrderModal">Add Order</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User ID</th>
+                            <th>Order Date</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Payment Status</th>
+                            <th>Shipping Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                        <!-- Orders will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Order Modal -->
+        <div class="modal fade" id="addOrderModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addOrderForm">
+                            <div class="mb-3">
+                                <label for="userId" class="form-label">User ID</label>
+                                <input type="number" class="form-control" id="userId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="orderDate" class="form-label">Order Date</label>
+                                <input type="datetime-local" class="form-control" id="orderDate">
+                            </div>
+                            <div class="mb-3">
+                                <label for="totalAmount" class="form-label">Total Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="totalAmount" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="orderStatus" class="form-label">Order Status</label>
+                                <select class="form-control" id="orderStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Processing">Processing</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentStatus" class="form-label">Payment Status</label>
+                                <select class="form-control" id="paymentStatus">
+                                    <option value="Unpaid">Unpaid</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Refunded">Refunded</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="shippingStatus" class="form-label">Shipping Status</label>
+                                <select class="form-control" id="shippingStatus">
+                                    <option value="Not Shipped">Not Shipped</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Order</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Order Modal -->
+        <div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editOrderForm">
+                            <input type="hidden" id="editOrderId">
+                            <div class="mb-3">
+                                <label for="editUserId" class="form-label">User ID</label>
+                                <input type="number" class="form-control" id="editUserId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editOrderDate" class="form-label">Order Date</label>
+                                <input type="datetime-local" class="form-control" id="editOrderDate">
+                            </div>
+                            <div class="mb-3">
+                                <label for="editTotalAmount" class="form-label">Total Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="editTotalAmount" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editOrderStatus" class="form-label">Order Status</label>
+                                <select class="form-control" id="editOrderStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Processing">Processing</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPaymentStatus" class="form-label">Payment Status</label>
+                                <select class="form-control" id="editPaymentStatus">
+                                    <option value="Unpaid">Unpaid</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Refunded">Refunded</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editShippingStatus" class="form-label">Shipping Status</label>
+                                <select class="form-control" id="editShippingStatus">
+                                    <option value="Not Shipped">Not Shipped</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/orders';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load orders on page load
+            loadOrders();
+
+            // Add order form submission
+            $('#addOrderForm').submit(function(e) {
+                e.preventDefault();
+                addOrder();
+            });
+
+            // Edit order form submission
+            $('#editOrderForm').submit(function(e) {
+                e.preventDefault();
+                updateOrder();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadOrders() {
+                $.ajax({
+                    url: apiBaseUrl,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        populateOrderTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Failed to load orders: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function populateOrderTable(orders) {
+                const tableBody = $('#orderTableBody');
+                tableBody.empty();
+
+                if (orders.length === 0) {
+                    tableBody.append('<tr><td colspan="8" class="text-center">No orders found</td></tr>');
+                    return;
+                }
+
+                orders.forEach(order => {
+                    const row = `
+                        <tr>
+                            <td>${order.orderId}</td>
+                            <td>${order.userId}</td>
+                            <td>${new Date(order.orderDate).toLocaleString()}</td>
+                            <td>$${order.totalAmount.toFixed(2)}</td>
+                            <td>${order.orderStatus}</td>
+                            <td>${order.paymentStatus}</td>
+                            <td>${order.shippingStatus}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${order.orderId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${order.orderId}">Delete</button>
+                                <button class="btn btn-sm btn-info details-btn" data-id="${order.orderId}">Details</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const orderId = $(this).data('id');
+                    editOrder(orderId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const orderId = $(this).data('id');
+                    deleteOrder(orderId);
+                });
+
+                // Add event listeners to details buttons
+                $('.details-btn').click(function() {
+                    const orderId = $(this).data('id');
+                    window.location.href = `OrderDetailManager.html?orderId=${orderId}`;
+                });
+            }
+
+            function addOrder() {
+                const orderData = {
+                    UserID: parseInt($('#userId').val()),
+                    OrderDate: $('#orderDate').val() ? new Date($('#orderDate').val()).toISOString() : new Date().toISOString(),
+                    TotalAmount: parseFloat($('#totalAmount').val()),
+                    OrderStatus: $('#orderStatus').val(),
+                    PaymentStatus: $('#paymentStatus').val(),
+                    ShippingStatus: $('#shippingStatus').val()
+                };
+
+                $.ajax({
+                    url: apiBaseUrl,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(orderData),
+                    success: function(response) {
+                        $('#addOrderModal').modal('hide');
+                        $('#addOrderForm')[0].reset();
+                        loadOrders();
+                        showSuccess('Order added successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to add order: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editOrder(orderId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/${orderId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const order = response.data;
+                        $('#editOrderId').val(order.orderId);
+                        $('#editUserId').val(order.userId);
+
+                        // Format date for datetime-local input
+                        const orderDate = new Date(order.orderDate);
+                        $('#editOrderDate').val(orderDate.toISOString().slice(0, 16));
+
+                        $('#editTotalAmount').val(order.totalAmount);
+                        $('#editOrderStatus').val(order.orderStatus);
+                        $('#editPaymentStatus').val(order.paymentStatus);
+                        $('#editShippingStatus').val(order.shippingStatus);
+
+                        const modal = new bootstrap.Modal(document.getElementById('editOrderModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get order: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updateOrder() {
+                const orderId = $('#editOrderId').val();
+                const orderData = {
+                    UserID: parseInt($('#editUserId').val()),
+                    OrderDate: $('#editOrderDate').val() ? new Date($('#editOrderDate').val()).toISOString() : new Date().toISOString(),
+                    TotalAmount: parseFloat($('#editTotalAmount').val()),
+                    OrderStatus: $('#editOrderStatus').val(),
+                    PaymentStatus: $('#editPaymentStatus').val(),
+                    ShippingStatus: $('#editShippingStatus').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/${orderId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(orderData),
+                    success: function(response) {
+                        $('#editOrderModal').modal('hide');
+                        loadOrders();
+                        showSuccess('Order updated successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to update order: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteOrder(orderId) {
+                if (!confirm('Are you sure you want to delete this order?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/${orderId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        loadOrders();
+                        showSuccess('Order deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete order: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Repair Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="ProductRepairManager.html" class="active">Product Repairs</a>
+        <a href="ProductManager.html">Product Management</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Product Repair Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Repair Requests</h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addRepairModal">Add Repair Request</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product ID</th>
+                            <th>User ID</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                            <th>Completion Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="repairTableBody">
+                        <!-- Repair requests will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Repair Modal -->
+        <div class="modal fade" id="addRepairModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Repair Request</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addRepairForm">
+                            <div class="mb-3">
+                                <label for="repairProductId" class="form-label">Product ID</label>
+                                <input type="number" class="form-control" id="repairProductId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="repairUserId" class="form-label">User ID</label>
+                                <input type="number" class="form-control" id="repairUserId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="issueDescription" class="form-label">Issue Description</label>
+                                <textarea class="form-control" id="issueDescription" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="repairStatus" class="form-label">Status</label>
+                                <select class="form-control" id="repairStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="repairCompletionDate" class="form-label">Completion Date (if applicable)</label>
+                                <input type="datetime-local" class="form-control" id="repairCompletionDate">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Request</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Repair Modal -->
+        <div class="modal fade" id="editRepairModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Repair Request</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editRepairForm">
+                            <input type="hidden" id="editRepairId">
+                            <div class="mb-3">
+                                <label for="editRepairProductId" class="form-label">Product ID</label>
+                                <input type="number" class="form-control" id="editRepairProductId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editRepairUserId" class="form-label">User ID</label>
+                                <input type="number" class="form-control" id="editRepairUserId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editIssueDescription" class="form-label">Issue Description</label>
+                                <textarea class="form-control" id="editIssueDescription" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editRepairStatus" class="form-label">Status</label>
+                                <select class="form-control" id="editRepairStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editRepairCompletionDate" class="form-label">Completion Date</label>
+                                <input type="datetime-local" class="form-control" id="editRepairCompletionDate">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/repairs';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load repairs on page load
+            loadRepairs();
+
+            // Add repair form submission
+            $('#addRepairForm').submit(function(e) {
+                e.preventDefault();
+                addRepair();
+            });
+
+            // Edit repair form submission
+            $('#editRepairForm').submit(function(e) {
+                e.preventDefault();
+                updateRepair();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadRepairs() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        populateRepairTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Failed to load repairs: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function populateRepairTable(repairs) {
+                const tableBody = $('#repairTableBody');
+                tableBody.empty();
+
+                if (repairs.length === 0) {
+                    tableBody.append('<tr><td colspan="7" class="text-center">No repair requests found</td></tr>');
+                    return;
+                }
+
+                repairs.forEach(repair => {
+                    const row = `
+                        <tr>
+                            <td>${repair.repairId}</td>
+                            <td>${repair.productId}</td>
+                            <td>${repair.userId}</td>
+                            <td>${new Date(repair.repairRequestDate).toLocaleString()}</td>
+                            <td>${repair.repairStatus}</td>
+                            <td>${repair.repairCompletionDate ? new Date(repair.repairCompletionDate).toLocaleString() : 'N/A'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${repair.repairId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${repair.repairId}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const repairId = $(this).data('id');
+                    editRepair(repairId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const repairId = $(this).data('id');
+                    deleteRepair(repairId);
+                });
+            }
+
+            function addRepair() {
+                const repairData = {
+                    ProductID: parseInt($('#repairProductId').val()),
+                    UserID: parseInt($('#repairUserId').val()),
+                    IssueDescription: $('#issueDescription').val(),
+                    RepairStatus: $('#repairStatus').val(),
+                    RepairRequestDate: new Date().toISOString(),
+                    RepairCompletionDate: $('#repairCompletionDate').val() ? new Date($('#repairCompletionDate').val()).toISOString() : null
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Add`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(repairData),
+                    success: function(response) {
+                        $('#addRepairModal').modal('hide');
+                        $('#addRepairForm')[0].reset();
+                        loadRepairs();
+                        showSuccess('Repair request added successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to add repair request: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editRepair(repairId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search/${repairId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const repair = response.data;
+                        $('#editRepairId').val(repair.repairId);
+                        $('#editRepairProductId').val(repair.productId);
+                        $('#editRepairUserId').val(repair.userId);
+                        $('#editIssueDescription').val(repair.issueDescription);
+                        $('#editRepairStatus').val(repair.repairStatus);
+
+                        if (repair.repairCompletionDate) {
+                            const completionDate = new Date(repair.repairCompletionDate);
+                            $('#editRepairCompletionDate').val(completionDate.toISOString().slice(0, 16));
+                        }
+
+                        const modal = new bootstrap.Modal(document.getElementById('editRepairModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get repair request: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updateRepair() {
+                const repairId = $('#editRepairId').val();
+                const repairData = {
+                    ProductID: parseInt($('#editRepairProductId').val()),
+                    UserID: parseInt($('#editRepairUserId').val()),
+                    IssueDescription: $('#editIssueDescription').val(),
+                    RepairStatus: $('#editRepairStatus').val(),
+                    RepairCompletionDate: $('#editRepairCompletionDate').val() ? new Date($('#editRepairCompletionDate').val()).toISOString() : null
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${repairId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(repairData),
+                    success: function(response) {
+                        $('#editRepairModal').modal('hide');
+                        loadRepairs();
+                        showSuccess('Repair request updated successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to update repair request: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteRepair(repairId) {
+                if (!confirm('Are you sure you want to delete this repair request?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${repairId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        loadRepairs();
+                        showSuccess('Repair request deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete repair request: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>

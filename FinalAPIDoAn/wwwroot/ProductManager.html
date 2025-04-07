@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="ProductManager.html" class="active">Product Management</a>
+        <a href="CategoryManager.html">Category Management</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Product Management</h1>
+        
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Products</h5>
+                <div>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search products...">
+                    <button id="searchBtn" class="btn btn-primary">Search</button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">Add Product</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody">
+                        <!-- Products will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Product Modal -->
+        <div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Product</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addProductForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="productName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productPrice" class="form-label">Price</label>
+                                <input type="number" step="0.01" class="form-control" id="productPrice" min="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stockQuantity" class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" id="stockQuantity" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="categoryId" class="form-label">Category ID</label>
+                                <input type="number" class="form-control" id="categoryId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="mainImage" class="form-label">Main Image</label>
+                                <input type="file" class="form-control" id="mainImage" accept="image/*">
+                            </div>
+                            <div class="mb-3">
+                                <label for="additionalImages" class="form-label">Additional Images</label>
+                                <input type="file" class="form-control" id="additionalImages" multiple accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Product</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Product Modal -->
+        <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Product</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProductForm">
+                            <input type="hidden" id="editProductId">
+                            <div class="mb-3">
+                                <label for="editProductName" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="editProductName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="editProductDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductPrice" class="form-label">Price</label>
+                                <input type="number" step="0.01" class="form-control" id="editProductPrice" min="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editStockQuantity" class="form-label">Stock Quantity</label>
+                                <input type="number" class="form-control" id="editStockQuantity" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editCategoryId" class="form-label">Category ID</label>
+                                <input type="number" class="form-control" id="editCategoryId" required>
+                            </div>
+                            <div id="productImagesContainer" class="mb-3">
+                                <!-- Product images will be loaded here -->
+                            </div>
+                            <div class="mb-3">
+                                <label for="editMainImage" class="form-label">Update Main Image</label>
+                                <input type="file" class="form-control" id="editMainImage" accept="image/*">
+                            </div>
+                            <div class="mb-3">
+                                <label for="editAdditionalImages" class="form-label">Add More Images</label>
+                                <input type="file" class="form-control" id="editAdditionalImages" multiple accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Gallery Modal -->
+        <div class="modal fade" id="imageGalleryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Product Images</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="imageGallery" class="row">
+                            <!-- Images will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/products';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load products on page load
+            loadProducts();
+
+            // Search functionality
+            $('#searchBtn').click(function() {
+                const keyword = $('#searchInput').val().trim();
+                if (keyword) {
+                    searchProducts(keyword);
+                } else {
+                    loadProducts();
+                }
+            });
+
+            // Add product form submission
+            $('#addProductForm').submit(function(e) {
+                e.preventDefault();
+                addProduct();
+            });
+
+            // Edit product form submission
+            $('#editProductForm').submit(function(e) {
+                e.preventDefault();
+                updateProduct();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadProducts() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        populateProductTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Failed to load products: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function searchProducts(keyword) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: { keyword: keyword },
+                    success: function(response) {
+                        populateProductTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Search failed: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function populateProductTable(products) {
+                const tableBody = $('#productTableBody');
+                tableBody.empty();
+
+                if (products.length === 0) {
+                    tableBody.append('<tr><td colspan="7" class="text-center">No products found</td></tr>');
+                    return;
+                }
+
+                products.forEach(product => {
+                    const row = `
+                        <tr>
+                            <td>${product.productId}</td>
+                            <td>${product.productName}</td>
+                            <td>${product.description || ''}</td>
+                            <td>$${product.price.toFixed(2)}</td>
+                            <td>${product.stockQuantity}</td>
+                            <td>${product.categoryId}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${product.productId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${product.productId}">Delete</button>
+                                <button class="btn btn-sm btn-info images-btn" data-id="${product.productId}">Images</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const productId = $(this).data('id');
+                    editProduct(productId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const productId = $(this).data('id');
+                    deleteProduct(productId);
+                });
+
+                // Add event listeners to images buttons
+                $('.images-btn').click(function() {
+                    const productId = $(this).data('id');
+                    showProductImages(productId);
+                });
+            }
+
+            function addProduct() {
+                const formData = new FormData();
+                formData.append('ProductName', $('#productName').val());
+                formData.append('Description', $('#productDescription').val());
+                formData.append('Price', $('#productPrice').val());
+                formData.append('StockQuantity', $('#stockQuantity').val());
+                formData.append('CategoryID', $('#categoryId').val());
+                
+                const mainImage = $('#mainImage')[0].files[0];
+                if (mainImage) {
+                    formData.append('MainImage', mainImage);
+                }
+                
+                const additionalImages = $('#additionalImages')[0].files;
+                if (additionalImages && additionalImages.length > 0) {
+                    for (let i = 0; i < additionalImages.length; i++) {
+                        formData.append('AdditionalImages', additionalImages[i]);
+                    }
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Add`,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        $('#addProductModal').modal('hide');
+                        $('#addProductForm')[0].reset();
+                        loadProducts();
+                        showSuccess('Product added successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to add product: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editProduct(productId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Get/${productId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const product = response.data;
+                        $('#editProductId').val(product.productId);
+                        $('#editProductName').val(product.productName);
+                        $('#editProductDescription').val(product.description || '');
+                        $('#editProductPrice').val(product.price);
+                        $('#editStockQuantity').val(product.stockQuantity);
+                        $('#editCategoryId').val(product.categoryId);
+                        
+                        // Load product images
+                        const imagesContainer = $('#productImagesContainer');
+                        imagesContainer.empty();
+                        
+                        if (product.productImages && product.productImages.length > 0) {
+                            imagesContainer.append('<h6>Current Images:</h6>');
+                            product.productImages.forEach(image => {
+                                imagesContainer.append(`
+                                    <div class="mb-2">
+                                        <img src="${image.imageUrl}" class="img-thumbnail" style="max-height: 100px;">
+                                        <button class="btn btn-sm btn-danger delete-image-btn" 
+                                            data-image-id="${image.imageId}" 
+                                            data-product-id="${product.productId}">Delete</button>
+                                    </div>
+                                `);
+                            });
+                        }
+                        
+                        // Add event listeners to delete image buttons
+                        $('.delete-image-btn').click(function() {
+                            const imageId = $(this).data('image-id');
+                            const productId = $(this).data('product-id');
+                            deleteProductImage(productId, imageId);
+                        });
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get product: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updateProduct() {
+                const formData = new FormData();
+                formData.append('ProductName', $('#editProductName').val());
+                formData.append('Description', $('#editProductDescription').val());
+                formData.append('Price', $('#editProductPrice').val());
+                formData.append('StockQuantity', $('#editStockQuantity').val());
+                formData.append('CategoryID', $('#editCategoryId').val());
+                
+                const mainImage = $('#editMainImage')[0].files[0];
+                if (mainImage) {
+                    formData.append('MainImage', mainImage);
+                }
+                
+                const additionalImages = $('#editAdditionalImages')[0].files;
+                if (additionalImages && additionalImages.length > 0) {
+                    for (let i = 0; i < additionalImages.length; i++) {
+                        formData.append('AdditionalImages', additionalImages[i]);
+                    }
+                }
+
+                const productId = $('#editProductId').val();
+                
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${productId}`,
+                    type: 'PUT',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        $('#editProductModal').modal('hide');
+                        loadProducts();
+                        showSuccess('Product updated successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to update product: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteProduct(productId) {
+                if (!confirm('Are you sure you want to delete this product and all its images?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${productId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        loadProducts();
+                        showSuccess('Product deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete product: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteProductImage(productId, imageId) {
+                if (!confirm('Are you sure you want to delete this image?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/${productId}/images/${imageId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        editProduct(productId); // Refresh the edit modal
+                        showSuccess('Image deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete image: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function showProductImages(productId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Get/${productId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const product = response.data;
+                        const gallery = $('#imageGallery');
+                        gallery.empty();
+                        
+                        if (product.productImages && product.productImages.length > 0) {
+                            product.productImages.forEach(image => {
+                                gallery.append(`
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card">
+                                            <img src="${image.imageUrl}" class="card-img-top">
+                                            <div class="card-body">
+                                                <button class="btn btn-sm btn-danger delete-image-btn" 
+                                                    data-image-id="${image.imageId}" 
+                                                    data-product-id="${product.productId}">Delete</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        } else {
+                            gallery.append('<p>No images found for this product</p>');
+                        }
+                        
+                        // Add event listeners to delete image buttons
+                        $('.delete-image-btn').click(function() {
+                            const imageId = $(this).data('image-id');
+                            const productId = $(this).data('product-id');
+                            deleteProductImage(productId, imageId);
+                            $('#imageGalleryModal').modal('hide');
+                        });
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('imageGalleryModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get product images: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>

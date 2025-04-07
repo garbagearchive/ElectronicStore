@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="PaymentManager.html" class="active">Payment Management</a>
+        <a href="OrderManager.html">Order Management</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Payment Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Payments</h5>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPaymentModal">Add Payment</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Order ID</th>
+                            <th>Payment Date</th>
+                            <th>Method</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentTableBody">
+                        <!-- Payments will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Payment Modal -->
+        <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addPaymentForm">
+                            <div class="mb-3">
+                                <label for="paymentOrderId" class="form-label">Order ID</label>
+                                <input type="number" class="form-control" id="paymentOrderId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentDate" class="form-label">Payment Date</label>
+                                <input type="datetime-local" class="form-control" id="paymentDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentMethod" class="form-label">Payment Method</label>
+                                <select class="form-control" id="paymentMethod" required>
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="PayPal">PayPal</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Cash">Cash</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentAmount" class="form-label">Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="paymentAmount" min="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentStatus" class="form-label">Status</label>
+                                <select class="form-control" id="paymentStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Failed">Failed</option>
+                                    <option value="Refunded">Refunded</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Payment</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Payment Modal -->
+        <div class="modal fade" id="editPaymentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Payment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editPaymentForm">
+                            <input type="hidden" id="editPaymentId">
+                            <div class="mb-3">
+                                <label for="editPaymentOrderId" class="form-label">Order ID</label>
+                                <input type="number" class="form-control" id="editPaymentOrderId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPaymentDate" class="form-label">Payment Date</label>
+                                <input type="datetime-local" class="form-control" id="editPaymentDate" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPaymentMethod" class="form-label">Payment Method</label>
+                                <select class="form-control" id="editPaymentMethod" required>
+                                    <option value="Credit Card">Credit Card</option>
+                                    <option value="PayPal">PayPal</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="Cash">Cash</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPaymentAmount" class="form-label">Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="editPaymentAmount" min="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPaymentStatus" class="form-label">Status</label>
+                                <select class="form-control" id="editPaymentStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Failed">Failed</option>
+                                    <option value="Refunded">Refunded</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:5160/api/payments';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load payments on page load
+            loadPayments();
+
+            // Add payment form submission
+            $('#addPaymentForm').submit(function(e) {
+                e.preventDefault();
+                addPayment();
+            });
+
+            // Edit payment form submission
+            $('#editPaymentForm').submit(function(e) {
+                e.preventDefault();
+                updatePayment();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadPayments() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        populatePaymentTable(response.data);
+                    },
+                    error: function(xhr) {
+                        showError('Failed to load payments: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function populatePaymentTable(payments) {
+                const tableBody = $('#paymentTableBody');
+                tableBody.empty();
+
+                if (payments.length === 0) {
+                    tableBody.append('<tr><td colspan="7" class="text-center">No payments found</td></tr>');
+                    return;
+                }
+
+                payments.forEach(payment => {
+                    const row = `
+                        <tr>
+                            <td>${payment.paymentId}</td>
+                            <td>${payment.orderId}</td>
+                            <td>${new Date(payment.paymentDate).toLocaleString()}</td>
+                            <td>${payment.paymentMethod}</td>
+                            <td>$${payment.amount.toFixed(2)}</td>
+                            <td>${payment.paymentStatus}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${payment.paymentId}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${payment.paymentId}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function() {
+                    const paymentId = $(this).data('id');
+                    editPayment(paymentId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function() {
+                    const paymentId = $(this).data('id');
+                    deletePayment(paymentId);
+                });
+            }
+
+            function addPayment() {
+                const paymentData = {
+                    OrderID: parseInt($('#paymentOrderId').val()),
+                    PaymentDate: new Date($('#paymentDate').val()).toISOString(),
+                    PaymentMethod: $('#paymentMethod').val(),
+                    Amount: parseFloat($('#paymentAmount').val()),
+                    PaymentStatus: $('#paymentStatus').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Add`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(paymentData),
+                    success: function(response) {
+                        $('#addPaymentModal').modal('hide');
+                        $('#addPaymentForm')[0].reset();
+                        loadPayments();
+                        showSuccess('Payment added successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to add payment: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editPayment(paymentId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search/${paymentId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function(response) {
+                        const payment = response.data;
+                        $('#editPaymentId').val(payment.paymentId);
+                        $('#editPaymentOrderId').val(payment.orderId);
+
+                        // Format date for datetime-local input
+                        const paymentDate = new Date(payment.paymentDate);
+                        $('#editPaymentDate').val(paymentDate.toISOString().slice(0, 16));
+
+                        $('#editPaymentMethod').val(payment.paymentMethod);
+                        $('#editPaymentAmount').val(payment.amount);
+                        $('#editPaymentStatus').val(payment.paymentStatus);
+
+                        const modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
+                        modal.show();
+                    },
+                    error: function(xhr) {
+                        showError('Failed to get payment: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updatePayment() {
+                const paymentId = $('#editPaymentId').val();
+                const paymentData = {
+                    OrderID: parseInt($('#editPaymentOrderId').val()),
+                    PaymentDate: new Date($('#editPaymentDate').val()).toISOString(),
+                    PaymentMethod: $('#editPaymentMethod').val(),
+                    Amount: parseFloat($('#editPaymentAmount').val()),
+                    PaymentStatus: $('#editPaymentStatus').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${paymentId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(paymentData),
+                    success: function(response) {
+                        $('#editPaymentModal').modal('hide');
+                        loadPayments();
+                        showSuccess('Payment updated successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to update payment: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deletePayment(paymentId) {
+                if (!confirm('Are you sure you want to delete this payment?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${paymentId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function() {
+                        loadPayments();
+                        showSuccess('Payment deleted successfully!');
+                    },
+                    error: function(xhr) {
+                        showError('Failed to delete payment: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>
