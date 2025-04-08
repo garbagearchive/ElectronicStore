@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - Online Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Online Store</a>
+            <div class="d-flex">
+                <a href="products.html" class="btn btn-outline-light me-2">Back to Products</a>
+                <a href="cart.html" class="btn btn-outline-light position-relative">
+                    Cart
+                    <span id="cartCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="row" id="productDetail">
+            <!-- Product details will be loaded here -->
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:7252/api/products';
+            const authToken = localStorage.getItem('authToken');
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!authToken) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!productId) {
+                window.location.href = 'products.html';
+                return;
+            }
+
+            loadProductDetail(productId);
+            updateCartCount();
+
+            function loadProductDetail(id) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Get/${id}`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        displayProductDetail(response.data);
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading product:', xhr);
+                        window.location.href = 'products.html';
+                    }
+                });
+            }
+
+            function displayProductDetail(product) {
+                const productDetail = $('#productDetail');
+
+                let imagesHtml = '';
+                if (product.productImages && product.productImages.length > 0) {
+                    imagesHtml = product.productImages.map(img => `
+                        <div class="col-md-3 mb-3">
+                            <img src="${img.imageUrl}" class="img-thumbnail" alt="Product image">
+                        </div>
+                    `).join('');
+                }
+
+                productDetail.html(`
+                    <div class="col-md-6">
+                        <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                ${product.productImages && product.productImages.length > 0 ?
+                                    product.productImages.map((img, index) => `
+                                        <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                                            <img src="${img.imageUrl}" class="d-block w-100" alt="Product image">
+                                        </div>
+                                    `).join('') :
+                                    '<div class="carousel-item active"><img src="https://via.placeholder.com/600" class="d-block w-100" alt="No image"></div>'}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h2>${product.productName}</h2>
+                        <p class="text-muted">Category: ${product.category ? product.category.categoryName : 'Uncategorized'}</p>
+                        <p class="text-success fw-bold fs-3">$${product.price.toFixed(2)}</p>
+                        <p>${product.description || 'No description available'}</p>
+                        <p class="text-muted">Stock: ${product.stockQuantity}</p>
+                        <div class="d-flex align-items-center mb-3">
+                            <input type="number" id="quantity" class="form-control me-2" value="1" min="1" max="${product.stockQuantity}" style="width: 80px;">
+                            <button class="btn btn-primary add-to-cart" data-id="${product.productId}">Add to Cart</button>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-4">
+                        <h4>Product Images</h4>
+                        <div class="row">
+                            ${imagesHtml || '<p>No additional images available</p>'}
+                        </div>
+                    </div>
+                `);
+
+                // Add to cart functionality
+                $('.add-to-cart').click(function() {
+                    const productId = $(this).data('id');
+                    const quantity = $('#quantity').val();
+                    addToCart(productId, quantity);
+                });
+            }
+
+            function addToCart(productId, quantity = 1) {
+                $.ajax({
+                    url: 'http://localhost:7252/api/Cart/Add',
+                    type: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        UserID: getUserIdFromToken(authToken),
+                        ProductID: productId,
+                        Quantity: quantity
+                    }),
+                    success: function() {
+                        updateCartCount();
+                        alert('Product added to cart!');
+                    },
+                    error: function(xhr) {
+                        alert('Failed to add to cart: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Error'));
+                    }
+                });
+            }
+
+            function updateCartCount() {
+                const userId = getUserIdFromToken(authToken);
+                if (!userId) return;
+
+                $.ajax({
+                    url: 'http://localhost:7252/api/Cart/List',
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        const userCartItems = response.data.filter(item => item.userId == userId);
+                        $('#cartCount').text(userCartItems.length);
+                    },
+                    error: function() {
+                        $('#cartCount').text('0');
+                    }
+                });
+            }
+
+            function getUserIdFromToken(token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.userId || payload.nameid;
+                } catch (e) {
+                    return null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
