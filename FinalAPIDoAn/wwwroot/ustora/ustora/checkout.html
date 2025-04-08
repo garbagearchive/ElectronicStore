@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout Page - Ustora Demo</title>
+
+    <!-- Google Fonts -->
+    <link href='https://fonts.googleapis.com/css?family=Titillium+Web:400,200,300,700,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Raleway:400,100' rel='stylesheet' type='text/css'>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+        /* Existing styles unchanged */
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        a {
+            transition: all 0.3s ease;
+        }
+
+        .header-area {
+            background-color: #f5f5f5;
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e1e1;
+            font-size: 13px;
+        }
+
+        .user-menu ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+            .user-menu ul li {
+                display: inline-block;
+                margin-right: 15px;
+            }
+
+                .user-menu ul li a {
+                    color: #666;
+                }
+
+                    .user-menu ul li a:hover {
+                        color: #5a88ca;
+                    }
+
+        .header-right .dropdown-menu {
+            min-width: 100px;
+            border-radius: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .site-branding-area {
+            padding: 20px 0;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .logo h1 {
+            margin: 0;
+        }
+
+        .shopping-item {
+            float: right;
+            margin-top: 15px;
+        }
+
+            .shopping-item a {
+                color: #666;
+                font-weight: 600;
+            }
+
+                .shopping-item a:hover {
+                    color: #5a88ca;
+                }
+
+        .mainmenu-area {
+            background-color: #5a88ca;
+        }
+
+        .navbar-nav {
+            float: none;
+            margin: 0 auto;
+            display: table;
+            table-layout: fixed;
+        }
+
+            .navbar-nav > li {
+                float: none;
+                display: table-cell;
+                text-align: center;
+            }
+
+                .navbar-nav > li > a {
+                    color: #fff;
+                    padding: 15px 20px;
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    font-size: 14px;
+                }
+
+                    .navbar-nav > li.active > a, .navbar-nav > li > a:hover {
+                        background-color: #4a76b0;
+                        color: #fff;
+                    }
+
+        .product-big-title-area {
+            padding: 40px 0;
+            background-color: #fff;
+            text-align: center;
+        }
+
+        .product-bit-title h2 {
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #333;
+            margin: 0;
+        }
+
+        .single-product-area {
+            padding: 40px 0;
+            background-color: #fff;
+        }
+
+        .form-row {
+            margin-bottom: 15px;
+        }
+
+            .form-row label {
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .form-row input[type="text"], .form-row input[type="password"], .form-row select, .form-row textarea {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e1e1e1;
+                border-radius: 4px;
+            }
+
+            .form-row .button {
+                padding: 10px 20px;
+                background-color: #5a88ca;
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                text-transform: uppercase;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+                .form-row .button:hover {
+                    background-color: #4a76b0;
+                    transform: translateY(-2px);
+                }
+
+        .required {
+            color: #5a88ca;
+        }
+
+        .shop_table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+            .shop_table th {
+                background-color: #5a88ca;
+                color: #fff;
+                padding: 15px;
+                text-transform: uppercase;
+                font-weight: 500;
+                font-size: 14px;
+            }
+
+            .shop_table td {
+                padding: 15px;
+                border-bottom: 1px solid #e1e1e1;
+            }
+
+            .shop_table .amount {
+                color: #5a88ca;
+                font-weight: 700;
+            }
+
+        .payment_methods {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px;
+        }
+
+            .payment_methods li {
+                margin-bottom: 15px;
+            }
+
+            .payment_methods label {
+                margin-left: 10px;
+                cursor: pointer;
+            }
+
+        .payment_box {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .payment_methods input[type="radio"]:checked + label + .payment_box {
+            display: block;
+        }
+
+        .place-order .button {
+            width: 100%;
+            padding: 15px;
+        }
+
+        .coupon-area {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+            .coupon-area label {
+                margin-right: 10px;
+                color: #333;
+            }
+
+            .coupon-area input[type="text"] {
+                width: 70%;
+                padding: 10px;
+                border: 1px solid #e1e1e1;
+                border-radius: 4px;
+                margin-right: 10px;
+            }
+
+            .coupon-area input[type="button"] {
+                width: 25%;
+                background-color: #5a88ca;
+                color: #fff;
+                border: none;
+                padding: 10px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+                .coupon-area input[type="button"]:hover {
+                    background-color: #4a76b0;
+                }
+
+        .footer-top-area {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 50px 0;
+        }
+
+        .footer-about-us h2 {
+            color: #fff;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+
+            .footer-about-us h2 span {
+                color: #5a88ca;
+            }
+
+        .footer-about-us p {
+            color: #bbb;
+        }
+
+        .footer-social a {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            background-color: #34495e;
+            color: #fff;
+            border-radius: 50%;
+            margin-right: 5px;
+            transition: all 0.3s ease;
+        }
+
+            .footer-social a:hover {
+                background-color: #5a88ca;
+            }
+
+        .footer-wid-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+            .footer-wid-title:after {
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 40px;
+                height: 2px;
+                background-color: #5a88ca;
+            }
+
+        .footer-menu ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+            .footer-menu ul li {
+                margin-bottom: 8px;
+            }
+
+                .footer-menu ul li a {
+                    color: #bbb;
+                }
+
+                    .footer-menu ul li a:hover {
+                        color: #5a88ca;
+                        padding-left: 5px;
+                    }
+
+        .newsletter-form input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #34495e;
+            color: #fff;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .newsletter-form input[type="submit"] {
+            background-color: #5a88ca;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+            .newsletter-form input[type="submit"]:hover {
+                background-color: #4a76b0;
+            }
+
+        .footer-bottom-area {
+            background-color: #233140;
+            padding: 20px 0;
+            color: #bbb;
+            font-size: 13px;
+        }
+
+        .footer-card-icon i {
+            font-size: 24px;
+            margin-left: 10px;
+            color: #5a88ca;
+        }
+
+        .payment-form {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+
+            .payment-form.active {
+                display: block;
+            }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e1e1e1;
+            padding-bottom: 10px;
+        }
+
+            .modal-header h3 {
+                margin: 0;
+            }
+
+        .modal-body {
+            padding: 15px 0;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e1e1e1;
+            padding-top: 10px;
+            text-align: right;
+        }
+
+            .modal-footer button {
+                background-color: #5a88ca;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+                .modal-footer button:hover {
+                    background-color: #4a76b0;
+                }
+
+        @media (max-width: 991px) {
+            .navbar-nav {
+                display: block;
+            }
+
+                .navbar-nav > li {
+                    display: block;
+                    text-align: left;
+                }
+        }
+
+        @media (max-width: 767px) {
+            .col-md-12 {
+                margin-bottom: 20px;
+            }
+
+            .coupon-area {
+                flex-direction: column;
+            }
+
+                .coupon-area input[type="text"], .coupon-area input[type="button"] {
+                    width: 100%;
+                    margin: 5px 0;
+                }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header, branding, and menu areas unchanged -->
+    <div class="header-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="user-menu">
+                        <ul>
+                            <li><a href="#"><i class="fa fa-user"></i> My Account</a></li>
+                            <li><a href="#"><i class="fa fa-heart"></i> Wishlist</a></li>
+                            <li><a href="cart.html"><i class="fa fa-shopping-cart"></i> My Cart</a></li>
+                            <li><a href="checkout.html"><i class="fa fa-check"></i> Checkout</a></li>
+                            <li id="login-link"><a href="login.html"><i class="fa fa-lock"></i> Login</a></li>
+                            <li id="logout-link" style="display: none;"><a href="#"><i class="fa fa-sign-out"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="header-right">
+                        <ul class="list-unstyled list-inline">
+                            <li class="dropdown dropdown-small">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#"><span class="key">currency :</span><span class="value">USD </span><b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">USD</a></li>
+                                    <li><a href="#">INR</a></li>
+                                    <li><a href="#">GBP</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown dropdown-small">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#"><span class="key">language :</span><span class="value">English </span><b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">English</a></li>
+                                    <li><a href="#">French</a></li>
+                                    <li><a href="#">German</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="site-branding-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="logo">
+                        <h1><a href="./"><img src="img/logo.png" alt="Ustora"></a></h1>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="shopping-item">
+                        <a href="cart.html">Cart - <span class="cart-amunt">$0.00</span> <i class="fa fa-shopping-cart"></i> <span class="product-count">0</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mainmenu-area">
+        <div class="container">
+            <div class="row">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="shop.html">Shop page</a></li>
+                        <li><a href="single-product.html">Single product</a></li>
+                        <li><a href="cart.html">Cart</a></li>
+                        <li class="active"><a href="checkout.html">Checkout</a></li>
+                        <li><a href="category.html">Category</a></li>
+                        <li><a href="#">Others</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-big-title-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="product-bit-title text-center">
+                        <h2>Checkout</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="single-product-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="product-content-right">
+                        <div class="woocommerce">
+                            <form enctype="multipart/form-data" action="#" class="checkout" method="post" name="checkout">
+                                <div id="customer_details" class="col2-set">
+                                    <div class="col-1">
+                                        <div class="woocommerce-billing-fields">
+                                            <h3>Billing Details</h3>
+                                            <p id="billing_country_field" class="form-row form-row-wide address-field validate-required">
+                                                <label for="billing_country">Country <span class="required">*</span></label>
+                                                <select class="country_to_state country_select" id="billing_country" name="billing_country">
+                                                    <option value="">Select a country…</option>
+                                                    <option value="AX">Åland Islands</option>
+                                                    <option selected="selected" value="GB">United Kingdom (UK)</option>
+                                                    <option value="US">United States (US)</option>
+                                                    <!-- Remaining options omitted for brevity -->
+                                                </select>
+                                            </p>
+                                            <p id="billing_first_name_field" class="form-row form-row-first validate-required">
+                                                <label for="billing_first_name">First Name <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="" id="billing_first_name" name="billing_first_name" class="input-text">
+                                            </p>
+                                            <p id="billing_last_name_field" class="form-row form-row-last validate-required">
+                                                <label for="billing_last_name">Last Name <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="" id="billing_last_name" name="billing_last_name" class="input-text">
+                                            </p>
+                                            <p id="billing_company_field" class="form-row form-row-wide">
+                                                <label for="billing_company">Company Name</label>
+                                                <input type="text" value="" placeholder="" id="billing_company" name="billing_company" class="input-text">
+                                            </p>
+                                            <p id="billing_address_1_field" class="form-row form-row-wide address-field validate-required">
+                                                <label for="billing_address_1">Address <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="Street address" id="billing_address_1" name="billing_address_1" class="input-text">
+                                            </p>
+                                            <p id="billing_address_2_field" class="form-row form-row-wide address-field">
+                                                <input type="text" value="" placeholder="Apartment, suite, unit etc. (optional)" id="billing_address_2" name="billing_address_2" class="input-text">
+                                            </p>
+                                            <p id="billing_city_field" class="form-row form-row-wide address-field validate-required">
+                                                <label for="billing_city">Town / City <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="Town / City" id="billing_city" name="billing_city" class="input-text">
+                                            </p>
+                                            <p id="billing_state_field" class="form-row form-row-first address-field validate-state">
+                                                <label for="billing_state">County</label>
+                                                <input type="text" id="billing_state" name="billing_state" placeholder="State / County" value="" class="input-text">
+                                            </p>
+                                            <p id="billing_postcode_field" class="form-row form-row-last address-field validate-required validate-postcode">
+                                                <label for="billing_postcode">Postcode <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="Postcode / Zip" id="billing_postcode" name="billing_postcode" class="input-text">
+                                            </p>
+                                            <p id="billing_email_field" class="form-row form-row-first validate-required validate-email">
+                                                <label for="billing_email">Email Address <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="" id="billing_email" name="billing_email" class="input-text">
+                                            </p>
+                                            <p id="billing_phone_field" class="form-row form-row-last validate-required validate-phone">
+                                                <label for="billing_phone">Phone <span class="required">*</span></label>
+                                                <input type="text" value="" placeholder="" id="billing_phone" name="billing_phone" class="input-text">
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="woocommerce-shipping-fields">
+                                            <p id="order_comments_field" class="form-row notes">
+                                                <label for="order_comments">Order Notes</label>
+                                                <textarea cols="5" rows="2" placeholder="Notes about your order, e.g. special notes for delivery." id="order_comments" class="input-text" name="order_comments"></textarea>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3 id="order_review_heading">Your Order</h3>
+                                <div id="order_review">
+                                    <table class="shop_table">
+                                        <thead>
+                                            <tr>
+                                                <th class="product-name">Product</th>
+                                                <th class="product-total">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="order-items"></tbody>
+                                        <tfoot>
+                                            <tr class="cart-subtotal">
+                                                <th>Cart Subtotal</th>
+                                                <td><span class="amount" id="cart-subtotal">$0.00</span></td>
+                                            </tr>
+                                            <tr class="coupon-discount" style="display: none;">
+                                                <th>Coupon Discount</th>
+                                                <td><span class="amount" id="coupon-discount">$0.00</span></td>
+                                            </tr>
+                                            <tr class="shipping">
+                                                <th>Shipping and Handling</th>
+                                                <td>Free Shipping</td>
+                                            </tr>
+                                            <tr class="order-total">
+                                                <th>Order Total</th>
+                                                <td><strong><span class="amount" id="order-total">$0.00</span></strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+
+                                    <div class="coupon-area">
+                                        <label for="coupon_code">Coupon:</label>
+                                        <input type="text" id="coupon_code" placeholder="Coupon code" value="">
+                                        <input type="button" id="apply-coupon" value="Apply Coupon">
+                                    </div>
+
+                                    <div id="payment">
+                                        <ul class="payment_methods methods">
+                                            <li class="payment_method_bacs">
+                                                <input type="radio" data-order_button_text="" checked="checked" value="bacs" name="payment_method" class="input-radio" id="payment_method_bacs">
+                                                <label for="payment_method_bacs">Direct Bank Transfer</label>
+                                                <div class="payment_box payment_method_bacs">
+                                                    <p>Make your payment directly into our bank account. Use your Order ID as the payment reference.</p>
+                                                </div>
+                                                <div class="payment-form" id="bacs-form">
+                                                    <p class="form-row">
+                                                        <label for="bacs_account_number">Account Number <span class="required">*</span></label>
+                                                        <input type="text" id="bacs_account_number" name="bacs_account_number" placeholder="Enter your bank account number">
+                                                    </p>
+                                                    <p class="form-row">
+                                                        <label for="bacs_routing_number">Routing Number <span class="required">*</span></label>
+                                                        <input type="text" id="bacs_routing_number" name="bacs_routing_number" placeholder="Enter your routing number">
+                                                    </p>
+                                                </div>
+                                            </li>
+                                            <li class="payment_method_cheque">
+                                                <input type="radio" data-order_button_text="" value="cheque" name="payment_method" class="input-radio" id="payment_method_cheque">
+                                                <label for="payment_method_cheque">Cheque Payment</label>
+                                                <div class="payment_box payment_method_cheque">
+                                                    <p>Please send your cheque to Store Name, Store Street, Store Town, Store State / County, Store Postcode.</p>
+                                                </div>
+                                                <div class="payment-form" id="cheque-form">
+                                                    <p class="form-row">
+                                                        <label for="cheque_number">Cheque Number <span class="required">*</span></label>
+                                                        <input type="text" id="cheque_number" name="cheque_number" placeholder="Enter your cheque number">
+                                                    </p>
+                                                </div>
+                                            </li>
+                                            <li class="payment_method_paypal">
+                                                <input type="radio" data-order_button_text="Proceed to PayPal" value="paypal" name="payment_method" class="input-radio" id="payment_method_paypal">
+                                                <label for="payment_method_paypal">PayPal <img alt="PayPal Acceptance Mark" src="https://www.paypalobjects.com/webstatic/mktg/Logo/AM_mc_vs_ms_ae_UK.png"></label>
+                                                <div class="payment_box payment_method_paypal">
+                                                    <p>Pay via PayPal; you can pay with your credit card if you don’t have a PayPal account.</p>
+                                                </div>
+                                                <div class="payment-form" id="paypal-form">
+                                                    <p class="form-row">
+                                                        <label for="paypal_email">PayPal Email <span class="required">*</span></label>
+                                                        <input type="text" id="paypal_email" name="paypal_email" placeholder="Enter your PayPal email">
+                                                    </p>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        <div class="form-row place-order">
+                                            <input type="submit" data-value="Place order" value="Place order" id="place_order" name="woocommerce_checkout_place_order" class="button alt">
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Order Receipt</h3>
+            </div>
+            <div class="modal-body" id="receipt-content">
+                <!-- Receipt content will be dynamically inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button id="close-receipt">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer unchanged -->
+    <div class="footer-top-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-sm-6">
+                    <div class="footer-about-us">
+                        <h2>u<span>Stora</span></h2>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+                        <div class="footer-social">
+                            <a href="#" target="_blank"><i class="fa fa-facebook"></i></a>
+                            <a href="#" target="_blank"><i class="fa fa-twitter"></i></a>
+                            <a href="#" target="_blank"><i class="fa fa-youtube"></i></a>
+                            <a href="#" target="_blank"><i class="fa fa-linkedin"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="footer-menu">
+                        <h2 class="footer-wid-title">User Navigation</h2>
+                        <ul>
+                            <li><a href="#">My account</a></li>
+                            <li><a href="#">Order history</a></li>
+                            <li><a href="#">Wishlist</a></li>
+                            <li><a href="#">Vendor contact</a></li>
+                            <li><a href="#">Front page</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="footer-newsletter">
+                        <h2 class="footer-wid-title">Newsletter</h2>
+                        <p>Sign up to our newsletter for exclusive deals!</p>
+                        <div class="newsletter-form">
+                            <form action="#">
+                                <input type="email" placeholder="Type your email">
+                                <input type="submit" value="Subscribe">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom-area">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="copyright">
+                        <p>© 2025 uCommerce. All Rights Reserved. <a href="http://www.freshdesignweb.com" target="_blank">freshDesignweb.com</a></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="footer-card-icon">
+                        <i class="fa fa-cc-discover"></i>
+                        <i class="fa fa-cc-mastercard"></i>
+                        <i class="fa fa-cc-paypal"></i>
+                        <i class="fa fa-cc-visa"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Configuration
+            const BASE_API_URL = 'https://localhost:7252';
+            const CART_API_URL = `${BASE_API_URL}/api/cart`;
+            const DISCOUNT_API_URL = `${BASE_API_URL}/api/discounts`;
+            const PRODUCT_API_URL = `${BASE_API_URL}/api/products`;
+
+            // State
+            let cartItems = [];
+            let cartTotal = 0;
+            let currentUserId = null;
+            let appliedCoupon = null;
+
+            // Elements
+            const orderItemsContainer = $('#order-items');
+            const cartSubtotalElement = $('#cart-subtotal');
+            const couponDiscountElement = $('#coupon-discount');
+            const orderTotalElement = $('#order-total');
+            const cartAmuntElement = $('.cart-amunt');
+            const productCountElement = $('.product-count');
+            const couponDiscountRow = $('.coupon-discount');
+            const receiptModal = $('#receipt-modal');
+            const receiptContent = $('#receipt-content');
+
+            // Helper Functions
+            function getUserStorageKey(key) {
+                return currentUserId ? `${currentUserId}_${key}` : key;
+            }
+
+            function saveCartData() {
+                localStorage.setItem(getUserStorageKey('cartItems'), JSON.stringify(cartItems));
+                localStorage.setItem(getUserStorageKey('cartTotal'), cartTotal.toFixed(2));
+                if (appliedCoupon) {
+                    localStorage.setItem(getUserStorageKey('appliedCoupon'), JSON.stringify(appliedCoupon));
+                }
+            }
+
+            function validateCartItem(item) {
+                return item && typeof item === 'object' && item.id && item.quantity && !isNaN(item.quantity) && item.quantity > 0 && item.price && !isNaN(item.price) && item.name;
+            }
+
+            function normalizeCartItem(item) {
+                return {
+                    id: item.productId || item.id, // Use productId from server response
+                    name: item.productName || item.name,
+                    price: item.price || 0,
+                    quantity: item.quantity || 1,
+                    image: item.image || (item.productImages && item.productImages[0]?.imageUrl) || 'https://via.placeholder.com/200',
+                    cartId: item.cartId || null // Store CartId for deletion
+                };
+            }
+
+            function loadCartFromLocalStorage() {
+                try {
+                    const storedItems = localStorage.getItem(getUserStorageKey('cartItems'));
+                    const storedTotal = localStorage.getItem(getUserStorageKey('cartTotal'));
+                    const storedCoupon = localStorage.getItem(getUserStorageKey('appliedCoupon'));
+
+                    if (storedItems) {
+                        const parsedItems = JSON.parse(storedItems);
+                        cartItems = Array.isArray(parsedItems) ? parsedItems.map(normalizeCartItem).filter(validateCartItem) : [];
+                    } else {
+                        cartItems = [];
+                    }
+
+                    cartTotal = storedTotal ? parseFloat(storedTotal) : cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    appliedCoupon = storedCoupon ? JSON.parse(storedCoupon) : null;
+
+                    return true;
+                } catch (e) {
+                    console.error('Error loading cart from localStorage:', e);
+                    cartItems = [];
+                    cartTotal = 0;
+                    appliedCoupon = null;
+                    return false;
+                }
+            }
+
+            // Auth Functions
+            async function checkAuthStatus() {
+                const token = localStorage.getItem('authToken');
+                currentUserId = localStorage.getItem('currentUserId');
+
+                if (!token) {
+                    if (!currentUserId) {
+                        currentUserId = 'guest_' + Math.random().toString(36).substr(2, 9);
+                        localStorage.setItem('currentUserId', currentUserId);
+                    }
+                    return { isAuthenticated: false, userId: currentUserId };
+                }
+
+                try {
+                    const response = await $.ajax({
+                        url: `${BASE_API_URL}/api/account/List`,
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                    });
+
+                    if (response && response.userId) {
+                        currentUserId = response.userId;
+                        localStorage.setItem('currentUserId', currentUserId);
+                    } else if (!currentUserId) {
+                        currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+                        localStorage.setItem('currentUserId', currentUserId);
+                    }
+
+                    return { isAuthenticated: true, userId: currentUserId };
+                } catch (error) {
+                    console.error('Error checking auth status:', error);
+                    if (!currentUserId) {
+                        currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+                        localStorage.setItem('currentUserId', currentUserId);
+                    }
+                    return { isAuthenticated: false, userId: currentUserId };
+                }
+            }
+
+            async function toggleLoginLogout() {
+                const authStatus = await checkAuthStatus();
+                $('#login-link').toggle(!authStatus.isAuthenticated);
+                $('#logout-link').toggle(authStatus.isAuthenticated);
+            }
+
+            // Cart Functions
+            async function syncCart() {
+                const token = localStorage.getItem('authToken');
+                loadCartFromLocalStorage();
+
+                if (token && currentUserId) {
+                    try {
+                        const response = await $.ajax({
+                            url: `${CART_API_URL}/List`,
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+                        if (response && response.data) {
+                            const serverCartItems = response.data
+                                .filter(item => item.userId === currentUserId) // Filter by userId
+                                .map(normalizeCartItem)
+                                .filter(validateCartItem);
+
+                            const localItemIds = new Set(cartItems.map(item => item.id));
+                            const mergedItems = {};
+
+                            // Prioritize local cart, update with server quantities if present
+                            cartItems.forEach(item => {
+                                mergedItems[item.id] = { ...item };
+                            });
+
+                            serverCartItems.forEach(item => {
+                                if (mergedItems[item.id]) {
+                                    mergedItems[item.id].quantity = Math.max(mergedItems[item.id].quantity, item.quantity);
+                                    mergedItems[item.id].cartId = item.cartId; // Update cartId
+                                } else {
+                                    mergedItems[item.id] = { ...item };
+                                }
+                            });
+
+                            cartItems = Object.values(mergedItems);
+                            cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                        }
+                    } catch (error) {
+                        console.error('Error syncing cart with server:', error);
+                    }
+                }
+
+                saveCartData();
+                renderOrder();
+            }
+
+            function renderOrder() {
+                orderItemsContainer.empty();
+
+                if (cartItems.length === 0) {
+                    orderItemsContainer.html('<tr><td colspan="2" class="text-center">Your cart is empty</td></tr>');
+                    updateTotals();
+                    return;
+                }
+
+                cartItems.forEach(item => {
+                    const itemTotal = (item.price * item.quantity).toFixed(2);
+                    orderItemsContainer.append(`
+                        <tr class="cart_item">
+                            <td class="product-name">
+                                ${item.name} <strong class="product-quantity">× ${item.quantity}</strong>
+                            </td>
+                            <td class="product-total">
+                                <span class="amount">$${itemTotal}</span>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                updateTotals();
+            }
+
+            function updateTotals() {
+                cartTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const shipping = 0;
+                let discount = 0;
+
+                if (appliedCoupon && appliedCoupon.percentage) {
+                    discount = cartTotal * (appliedCoupon.percentage / 100);
+                    couponDiscountRow.show();
+                    couponDiscountElement.text(`-$${discount.toFixed(2)}`);
+                } else {
+                    couponDiscountRow.hide();
+                    couponDiscountElement.text('$0.00');
+                }
+
+                const total = (cartTotal - discount + shipping).toFixed(2);
+                const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+                cartSubtotalElement.text(`$${cartTotal.toFixed(2)}`);
+                orderTotalElement.text(`$${total}`);
+                cartAmuntElement.text(`$${total}`);
+                productCountElement.text(itemCount);
+
+                saveCartData();
+            }
+
+            // Discount Functions
+            async function fetchDiscounts() {
+                try {
+                    const response = await $.ajax({
+                        url: `${DISCOUNT_API_URL}/List`,
+                        method: 'GET',
+                        dataType: 'json',
+                    });
+                    return response.data || [];
+                } catch (error) {
+                    console.error('Error fetching discounts:', error);
+                    return [];
+                }
+            }
+
+            async function applyCoupon(code) {
+                if (!code) {
+                    alert('Please enter a coupon code.');
+                    return;
+                }
+
+                const discounts = await fetchDiscounts();
+                const coupon = discounts.find(d =>
+                    d.discountCode === code &&
+                    d.isActive &&
+                    new Date(d.startDate) <= new Date() &&
+                    new Date(d.endDate) >= new Date()
+                );
+
+                if (coupon) {
+                    appliedCoupon = {
+                        code: coupon.discountCode,
+                        percentage: coupon.discountPercentage
+                    };
+                    saveCartData();
+                    renderOrder();
+                    alert(`Coupon applied! ${coupon.discountPercentage}% discount.`);
+                } else {
+                    appliedCoupon = null;
+                    saveCartData();
+                    renderOrder();
+                    alert('Invalid or expired coupon code.');
+                }
+            }
+
+            // Checkout Functions
+            async function checkProductAvailability() {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    alert('Please log in to place an order.');
+                    return false;
+                }
+
+                if (!cartItems.length) {
+                    alert('Your cart is empty.');
+                    return false;
+                }
+
+                try {
+                    for (const item of cartItems) {
+                        const response = await $.ajax({
+                            url: `${PRODUCT_API_URL}/Get/${item.id}`,
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+                        if (!response.data || response.data.stockQuantity < item.quantity) {
+                            alert(`Insufficient stock for ${item.name}. Available: ${response.data?.stockQuantity || 0}`);
+                            return false;
+                        }
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Error checking product availability:', error);
+                    alert('Error checking product availability. Please try again.');
+                    return false;
+                }
+            }
+
+            async function updateProductStock() {
+                const token = localStorage.getItem('authToken');
+                if (!token) return false;
+
+                try {
+                    for (const item of cartItems) {
+                        const response = await $.ajax({
+                            url: `${PRODUCT_API_URL}/Get/${item.id}`,
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            },
+                        });
+
+                        const product = response.data;
+                        const currentStock = product.stockQuantity;
+                        const newStock = currentStock - item.quantity;
+
+                        if (newStock < 0) {
+                            throw new Error(`Stock cannot be negative for ${item.name}`);
+                        }
+
+                        const formData = new FormData();
+                        formData.append('ProductName', product.productName);
+                        formData.append('Description', product.description);
+                        formData.append('Price', product.price.toString());
+                        formData.append('StockQuantity', newStock.toString());
+                        formData.append('CategoryID', product.categoryId.toString());
+
+                        await $.ajax({
+                            url: `${PRODUCT_API_URL}/Update/${item.id}`,
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                            },
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                        });
+                    }
+                    return true;
+                } catch (error) {
+                    console.error('Error updating product stock:', error);
+                    alert('Failed to update product stock. Please contact support.');
+                    return false;
+                }
+            }
+
+            async function clearServerCart() {
+                const token = localStorage.getItem('authToken');
+                if (!token || !currentUserId) return;
+
+                try {
+                    // Fetch all cart items for the current user
+                    const response = await $.ajax({
+                        url: `${CART_API_URL}/List`,
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (response && response.data) {
+                        const userCartItems = response.data.filter(item => item.userId === currentUserId);
+                        for (const item of userCartItems) {
+                            await $.ajax({
+                                url: `${CART_API_URL}/Delete/${item.cartId}`,
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                },
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error clearing server cart:', error);
+                    throw error; // Propagate error to stop checkout if critical
+                }
+            }
+
+            function showReceipt() {
+                const paymentMethod = $('input[name="payment_method"]:checked').val();
+                const now = new Date();
+                const orderId = 'ORD-' + now.getTime().toString().slice(-8);
+
+                let paymentDetails = '';
+                if (paymentMethod === 'bacs') {
+                    paymentDetails = `
+                        <p><strong>Account:</strong> ${$('#bacs_account_number').val()}</p>
+                        <p><strong>Routing:</strong> ${$('#bacs_routing_number').val()}</p>`;
+                } else if (paymentMethod === 'cheque') {
+                    paymentDetails = `<p><strong>Cheque #:</strong> ${$('#cheque_number').val()}</p>`;
+                } else if (paymentMethod === 'paypal') {
+                    paymentDetails = `<p><strong>PayPal:</strong> ${$('#paypal_email').val()}</p>`;
+                }
+
+                receiptContent.html(`
+                    <div class="receipt-header">
+                        <h3>Order #${orderId}</h3>
+                        <p>${now.toLocaleString()}</p>
+                    </div>
+                    <div class="customer-info">
+                        <h4>Customer</h4>
+                        <p>${$('#billing_first_name').val()} ${$('#billing_last_name').val()}</p>
+                        <p>${$('#billing_email').val()}</p>
+                        <p>${$('#billing_phone').val()}</p>
+                    </div>
+                    <div class="order-summary">
+                        <h4>Order</h4>
+                        <table>
+                            ${cartItems.map(item => `
+                                <tr>
+                                    <td>${item.name} × ${item.quantity}</td>
+                                    <td>$${(item.price * item.quantity).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                            <tr><td colspan="2"><hr></td></tr>
+                            <tr>
+                                <td>Subtotal:</td>
+                                <td>${cartSubtotalElement.text()}</td>
+                            </tr>
+                            ${appliedCoupon ? `
+                            <tr>
+                                <td>Discount (${appliedCoupon.percentage}%):</td>
+                                <td>${couponDiscountElement.text()}</td>
+                            </tr>
+                            ` : ''}
+                            <tr>
+                                <td>Shipping:</td>
+                                <td>Free</td>
+                            </tr>
+                            <tr class="total">
+                                <td>Total:</td>
+                                <td>${orderTotalElement.text()}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="payment-info">
+                        <h4>Payment</h4>
+                        <p>Method: ${paymentMethod.toUpperCase()}</p>
+                        ${paymentDetails}
+                    </div>
+                    <div class="thank-you">
+                        <p>Thank you for your order!</p>
+                    </div>
+                `);
+                receiptModal.show();
+            }
+
+            function clearCart() {
+                cartItems = [];
+                cartTotal = 0;
+                appliedCoupon = null;
+                localStorage.removeItem(getUserStorageKey('cartItems'));
+                localStorage.removeItem(getUserStorageKey('cartTotal'));
+                localStorage.removeItem(getUserStorageKey('appliedCoupon'));
+                renderOrder();
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUserId');
+                clearCart();
+                toggleLoginLogout();
+                window.location.href = 'index.html';
+            }
+
+            // Event Handlers
+            $('#apply-coupon').click(() => applyCoupon($('#coupon_code').val().trim()));
+
+            $('input[name="payment_method"]').change(function () {
+                $('.payment-form').removeClass('active');
+                $(`#${$(this).val()}-form`).addClass('active');
+            });
+
+            $('#place_order').on('click', async function (e) {
+                e.preventDefault();
+                const $button = $(this).prop('disabled', true).val('Processing...');
+
+                try {
+                    if (!cartItems.length) {
+                        alert('Your cart is empty.');
+                        return;
+                    }
+
+                    const requiredFields = [
+                        '#billing_first_name', '#billing_last_name',
+                        '#billing_address_1', '#billing_city',
+                        '#billing_postcode', '#billing_email',
+                        '#billing_phone'
+                    ];
+
+                    let valid = true;
+                    requiredFields.forEach(field => {
+                        if (!$(field).val().trim()) {
+                            $(field).css('border-color', 'red');
+                            valid = false;
+                        } else {
+                            $(field).css('border-color', '');
+                        }
+                    });
+
+                    if (!valid) {
+                        alert('Please fill all required fields.');
+                        return;
+                    }
+
+                    const paymentMethod = $('input[name="payment_method"]:checked').val();
+                    if (paymentMethod === 'bacs' && (!$('#bacs_account_number').val() || !$('#bacs_routing_number').val())) {
+                        alert('Please enter bank account details.');
+                        return;
+                    } else if (paymentMethod === 'cheque' && !$('#cheque_number').val()) {
+                        alert('Please enter cheque number.');
+                        return;
+                    } else if (paymentMethod === 'paypal' && !$('#paypal_email').val()) {
+                        alert('Please enter PayPal email.');
+                        return;
+                    }
+
+                    const available = await checkProductAvailability();
+                    if (!available) {
+                        return;
+                    }
+
+                    const stockUpdated = await updateProductStock();
+                    if (!stockUpdated) {
+                        return;
+                    }
+
+                    await clearServerCart();
+                    showReceipt();
+                    clearCart();
+
+                } catch (error) {
+                    console.error('Checkout error:', error);
+                    alert('An error occurred during checkout. Please try again.');
+                } finally {
+                    $button.prop('disabled', false).val('Place order');
+                }
+            });
+
+            $('#close-receipt').click(() => {
+                receiptModal.hide();
+                window.location.href = 'index.html';
+            });
+
+            $('#logout-link').click(e => {
+                e.preventDefault();
+                logout();
+            });
+
+            $('#login-link').click(e => {
+                e.preventDefault();
+                window.location.href = 'login.html?redirect=checkout.html';
+            });
+
+            // Initialize
+            async function initialize() {
+                await checkAuthStatus();
+                await syncCart();
+                toggleLoginLogout();
+                $('#bacs-form').addClass('active');
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+</html>

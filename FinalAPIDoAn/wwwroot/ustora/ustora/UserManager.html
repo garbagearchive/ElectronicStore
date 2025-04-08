@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="#" class="active" id="userManagementLink">User Management</a>
+        <a href="#">Product Management</a>
+        <a href="#">Order Management</a>
+        <a href="#">Reports</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1>User Management</h1>
+
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs" id="userTabs">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" data-tab="userList">User List</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-tab="register">Register User</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-tab="login">Login</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-tab="changePassword">Change Password</a>
+            </li>
+        </ul>
+
+        <!-- User List Tab -->
+        <div id="userList" class="tab-content active">
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">User List</h5>
+                    <div>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search by name...">
+                        <button id="searchBtn" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <!-- User data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register User Tab -->
+        <div id="register" class="tab-content">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Register New User</h5>
+                </div>
+                <div class="card-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerFullName" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="registerFullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPhone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="registerPhone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerAddress" class="form-label">Address</label>
+                            <input type="text" class="form-control" id="registerAddress" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerRole" class="form-label">Role</label>
+                            <select class="form-control" id="registerRole">
+                                <option value="Buyer">Buyer</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Staff">Staff</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Tab -->
+        <div id="login" class="tab-content">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>User Login</h5>
+                </div>
+                <div class="card-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="loginUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                    <div id="loginResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Tab -->
+        <div id="changePassword" class="tab-content">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="changeUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="changeUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label">Old Password</label>
+                            <input type="password" class="form-control" id="oldPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmNewPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning">Change Password</button>
+                    </form>
+                    <div id="changePasswordResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editUserForm">
+                            <input type="hidden" id="editUserId">
+                            <div class="mb-3">
+                                <label for="editUsername" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="editUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPasswordHash" class="form-label">Password Hash</label>
+                                <input type="text" class="form-control" id="editPasswordHash" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editFullName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="editFullName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editPhone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="editPhone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editAddress" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="editAddress" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editRole" class="form-label">Role</label>
+                                <select class="form-control" id="editRole">
+                                    <option value="Buyer">Buyer</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Staff">Staff</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assign Role Modal -->
+        <div class="modal fade" id="assignRoleModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Assign Role</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="assignRoleForm">
+                            <input type="hidden" id="assignRoleUserId">
+                            <div class="mb-3">
+                                <label for="assignRole" class="form-label">Role</label>
+                                <select class="form-control" id="assignRole" required>
+                                    <option value="Buyer">Buyer</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Staff">Staff</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Assign Role</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Global variables
+            let authToken = localStorage.getItem('authToken');
+            const apiBaseUrl = 'http://localhost:5160/api/account'; // Update with your API URL
+
+            // Tab functionality
+            $('[data-tab]').click(function (e) {
+                e.preventDefault();
+                const tabId = $(this).data('tab');
+
+                // Hide all tabs
+                $('.tab-content').removeClass('active');
+
+                // Show selected tab
+                $(`#${tabId}`).addClass('active');
+
+                // Update active tab link
+                $('.nav-link').removeClass('active');
+                $(this).addClass('active');
+
+                // If user list tab is selected, refresh the user list
+                if (tabId === 'userList') {
+                    loadUsers();
+                }
+            });
+
+            // Load users when page loads
+            loadUsers();
+
+            // Search functionality
+            $('#searchBtn').click(function () {
+                const keyword = $('#searchInput').val().trim();
+                if (keyword) {
+                    searchUsers(keyword);
+                } else {
+                    loadUsers();
+                }
+            });
+
+            // Register form submission
+            $('#registerForm').submit(function (e) {
+                e.preventDefault();
+                registerUser();
+            });
+
+            // Login form submission
+            $('#loginForm').submit(function (e) {
+                e.preventDefault();
+                loginUser();
+            });
+
+            // Change password form submission
+            $('#changePasswordForm').submit(function (e) {
+                e.preventDefault();
+                changePassword();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function (e) {
+                e.preventDefault();
+                logout();
+            });
+
+            // Function to load users
+            function loadUsers() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function (response) {
+                        populateUserTable(response.data);
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Failed to load users: ' + error);
+                    }
+                });
+            }
+
+            // Function to search users
+            function searchUsers(keyword) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    data: { keyword: keyword },
+                    success: function (response) {
+                        populateUserTable(response.data);
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Search failed: ' + error);
+                    }
+                });
+            }
+
+            // Function to populate user table
+            function populateUserTable(users) {
+                const tableBody = $('#userTableBody');
+                tableBody.empty();
+
+                if (users.length === 0) {
+                    tableBody.append('<tr><td colspan="6" class="text-center">No users found</td></tr>');
+                    return;
+                }
+
+                users.forEach(user => {
+                    const row = `
+                            <tr>
+                                <td>${user.userId}</td>
+                                <td>${user.username}</td>
+                                <td>${user.fullName}</td>
+                                <td>${user.email}</td>
+                                <td>${user.role}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary edit-btn" data-id="${user.userId}">Edit</button>
+                                    <button class="btn btn-sm btn-danger delete-btn" data-id="${user.userId}">Delete</button>
+                                    <button class="btn btn-sm btn-info assign-role-btn" data-id="${user.userId}">Assign Role</button>
+                                </td>
+                            </tr>
+                        `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function () {
+                    const userId = $(this).data('id');
+                    editUser(userId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function () {
+                    const userId = $(this).data('id');
+                    deleteUser(userId);
+                });
+
+                // Add event listeners to assign role buttons
+                $('.assign-role-btn').click(function () {
+                    const userId = $(this).data('id');
+                    showAssignRoleModal(userId);
+                });
+            }
+
+            // Function to register a new user
+            function registerUser() {
+                const userData = {
+                    username: $('#registerUsername').val(),
+                    password: $('#registerPassword').val(),
+                    fullName: $('#registerFullName').val(),
+                    email: $('#registerEmail').val(),
+                    phone: $('#registerPhone').val(),
+                    address: $('#registerAddress').val(),
+                    role: $('#registerRole').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Register`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userData),
+                    success: function (response) {
+                        showSuccess('User registered successfully!');
+                        $('#registerForm')[0].reset();
+                        loadUsers();
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Registration failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                    }
+                });
+            }
+
+            // Function to login user
+            function loginUser() {
+                const username = $('#loginUsername').val();
+                const password = $('#loginPassword').val();
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Login`,
+                    type: 'POST',
+                    data: {
+                        username: username,
+                        password: password
+                    },
+                    success: function (response) {
+                        authToken = response.token;
+                        localStorage.setItem('authToken', authToken);
+                        $('#loginResult').html('<div class="alert alert-success">Login successful!</div>');
+                        $('#loginForm')[0].reset();
+                    },
+                    error: function (xhr, status, error) {
+                        $('#loginResult').html(`<div class="alert alert-danger">Login failed: ${xhr.responseJSON ? xhr.responseJSON.message : error}</div>`);
+                    }
+                });
+            }
+
+            // Function to change password
+            function changePassword() {
+                const passwordData = {
+                    username: $('#changeUsername').val(),
+                    oldPassword: $('#oldPassword').val(),
+                    newPassword: $('#newPassword').val(),
+                    confirmNewPassword: $('#confirmNewPassword').val()
+                };
+
+                if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+                    $('#changePasswordResult').html('<div class="alert alert-danger">New passwords do not match</div>');
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/change-password`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(passwordData),
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function (response) {
+                        $('#changePasswordResult').html('<div class="alert alert-success">Password changed successfully!</div>');
+                        $('#changePasswordForm')[0].reset();
+                    },
+                    error: function (xhr, status, error) {
+                        $('#changePasswordResult').html(`<div class="alert alert-danger">Password change failed: ${xhr.responseJSON ? xhr.responseJSON.message : error}</div>`);
+                    }
+                });
+            }
+
+            // Function to edit user
+            function editUser(userId) {
+                // First get the user data
+                $.ajax({
+                    url: `${apiBaseUrl}/Get/${userId}`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function (response) {
+                        const user = response.data;
+                        $('#editUserId').val(user.userId);
+                        $('#editUsername').val(user.username);
+                        $('#editPasswordHash').val(user.passwordHash);
+                        $('#editFullName').val(user.fullName);
+                        $('#editEmail').val(user.email);
+                        $('#editPhone').val(user.phone);
+                        $('#editAddress').val(user.address);
+                        $('#editRole').val(user.role);
+
+                        // Show the modal
+                        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                        modal.show();
+
+                        // Handle form submission
+                        $('#editUserForm').off('submit').on('submit', function (e) {
+                            e.preventDefault();
+                            saveUserChanges(userId);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Failed to get user data: ' + error);
+                    }
+                });
+            }
+
+            // Function to save user changes
+            function saveUserChanges(userId) {
+                const userData = {
+                    username: $('#editUsername').val(),
+                    passwordHash: $('#editPasswordHash').val(),
+                    fullName: $('#editFullName').val(),
+                    email: $('#editEmail').val(),
+                    phone: $('#editPhone').val(),
+                    address: $('#editAddress').val(),
+                    role: $('#editRole').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${userId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(userData),
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function (response) {
+                        showSuccess('User updated successfully!');
+                        $('#editUserModal').modal('hide');
+                        loadUsers();
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Update failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                    }
+                });
+            }
+
+            // Function to delete user
+            function deleteUser(userId) {
+                if (!confirm('Are you sure you want to delete this user and all related data?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${userId}`,
+                    type: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function (response) {
+                        showSuccess('User deleted successfully!');
+                        loadUsers();
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Deletion failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                    }
+                });
+            }
+
+            // Function to show assign role modal
+            function showAssignRoleModal(userId) {
+                $('#assignRoleUserId').val(userId);
+                const modal = new bootstrap.Modal(document.getElementById('assignRoleModal'));
+                modal.show();
+
+                // Handle form submission
+                $('#assignRoleForm').off('submit').on('submit', function (e) {
+                    e.preventDefault();
+                    assignRole(userId);
+                });
+            }
+
+            // Function to assign role
+            function assignRole(userId) {
+                const roleData = {
+                    userId: userId,
+                    role: $('#assignRole').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/AssignRoles`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(roleData),
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function (response) {
+                        showSuccess('Role assigned successfully!');
+                        $('#assignRoleModal').modal('hide');
+                        loadUsers();
+                    },
+                    error: function (xhr, status, error) {
+                        showError('Role assignment failed: ' + (xhr.responseJSON ? xhr.responseJSON.message : error));
+                    }
+                });
+            }
+
+            // Function to logout
+            function logout() {
+                localStorage.removeItem('authToken');
+                authToken = null;
+                window.location.reload();
+            }
+
+            // Helper function to show success message
+            function showSuccess(message) {
+                alert(message); // You can replace this with a more sophisticated notification system
+            }
+
+            // Helper function to show error message
+            function showError(message) {
+                alert('Error: ' + message); // You can replace this with a more sophisticated notification system
+            }
+        });
+    </script>
+</body>
+</html>

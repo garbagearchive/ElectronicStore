@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="text-white">Admin Panel</h2>
+        <a href="CategoryManager.html" class="active">Category Management</a>
+        <a href="ProductManager.html">Product Management</a>
+        <a href="OrderManager.html">Order Management</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <h1>Category Management</h1>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Categories</h5>
+                <div>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search categories...">
+                    <button id="searchBtn" class="btn btn-primary">Search</button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Add Category</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoryTableBody">
+                        <!-- Categories will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Category Modal -->
+        <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addCategoryForm">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="categoryName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Category</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Category Modal -->
+        <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editCategoryForm">
+                            <input type="hidden" id="editCategoryId">
+                            <div class="mb-3">
+                                <label for="editCategoryName" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="editCategoryName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editCategoryDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="editCategoryDescription" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const apiBaseUrl = 'http://localhost:5160/api/Categories';
+            let authToken = localStorage.getItem('authToken');
+
+            // Load categories on page load
+            loadCategories();
+
+            // Search functionality
+            $('#searchBtn').click(function () {
+                const keyword = $('#searchInput').val().trim();
+                if (keyword) {
+                    searchCategories(keyword);
+                } else {
+                    loadCategories();
+                }
+            });
+
+            // Add category form submission
+            $('#addCategoryForm').submit(function (e) {
+                e.preventDefault();
+                addCategory();
+            });
+
+            // Edit category form submission
+            $('#editCategoryForm').submit(function (e) {
+                e.preventDefault();
+                updateCategory();
+            });
+
+            // Logout functionality
+            $('#logoutLink').click(function (e) {
+                e.preventDefault();
+                logout();
+            });
+
+            function loadCategories() {
+                $.ajax({
+                    url: `${apiBaseUrl}/List`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function (response) {
+                        populateCategoryTable(response.data);
+                    },
+                    error: function (xhr) {
+                        showError('Failed to load categories: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function searchCategories(keyword) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: { keyword: keyword },
+                    success: function (response) {
+                        populateCategoryTable(response.data);
+                    },
+                    error: function (xhr) {
+                        showError('Search failed: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function populateCategoryTable(categories) {
+                const tableBody = $('#categoryTableBody');
+                tableBody.empty();
+
+                if (categories.length === 0) {
+                    tableBody.append('<tr><td colspan="4" class="text-center">No categories found</td></tr>');
+                    return;
+                }
+
+                categories.forEach(category => {
+                    const row = `
+                            <tr>
+                                <td>${category.categoryId}</td>
+                                <td>${category.categoryName}</td>
+                                <td>${category.description || ''}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary edit-btn" data-id="${category.categoryId}">Edit</button>
+                                    <button class="btn btn-sm btn-danger delete-btn" data-id="${category.categoryId}">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    tableBody.append(row);
+                });
+
+                // Add event listeners to edit buttons
+                $('.edit-btn').click(function () {
+                    const categoryId = $(this).data('id');
+                    editCategory(categoryId);
+                });
+
+                // Add event listeners to delete buttons
+                $('.delete-btn').click(function () {
+                    const categoryId = $(this).data('id');
+                    deleteCategory(categoryId);
+                });
+            }
+
+            function addCategory() {
+                const categoryData = {
+                    CategoryName: $('#categoryName').val(),
+                    Description: $('#categoryDescription').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Add`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(categoryData),
+                    success: function (response) {
+                        $('#addCategoryModal').modal('hide');
+                        $('#addCategoryForm')[0].reset();
+                        loadCategories();
+                        showSuccess('Category added successfully!');
+                    },
+                    error: function (xhr) {
+                        showError('Failed to add category: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function editCategory(categoryId) {
+                $.ajax({
+                    url: `${apiBaseUrl}/Search?id=${categoryId}`,
+                    type: 'GET',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function (response) {
+                        const category = response.data;
+                        $('#editCategoryId').val(category.categoryId);
+                        $('#editCategoryName').val(category.categoryName);
+                        $('#editCategoryDescription').val(category.description || '');
+
+                        const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+                        modal.show();
+                    },
+                    error: function (xhr) {
+                        showError('Failed to get category: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function updateCategory() {
+                const categoryId = $('#editCategoryId').val();
+                const categoryData = {
+                    CategoryName: $('#editCategoryName').val(),
+                    Description: $('#editCategoryDescription').val()
+                };
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Update/${categoryId}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    data: JSON.stringify(categoryData),
+                    success: function (response) {
+                        $('#editCategoryModal').modal('hide');
+                        loadCategories();
+                        showSuccess('Category updated successfully!');
+                    },
+                    error: function (xhr) {
+                        showError('Failed to update category: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function deleteCategory(categoryId) {
+                if (!confirm('Are you sure you want to delete this category?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `${apiBaseUrl}/Delete/${categoryId}`,
+                    type: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    success: function () {
+                        loadCategories();
+                        showSuccess('Category deleted successfully!');
+                    },
+                    error: function (xhr) {
+                        showError('Failed to delete category: ' + xhr.responseJSON?.message || xhr.statusText);
+                    }
+                });
+            }
+
+            function logout() {
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            }
+
+            function showSuccess(message) {
+                alert(message);
+            }
+
+            function showError(message) {
+                alert('Error: ' + message);
+            }
+        });
+    </script>
+</body>
+</html>
