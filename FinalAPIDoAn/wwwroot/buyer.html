@@ -1,10 +1,235 @@
-﻿<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyer Dashboard - Online Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Additional styles for buyer dashboard */
+        .dashboard-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 100%;
+        }
+
+            .dashboard-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #0d6efd;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-actions .btn {
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .recent-products {
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            margin-bottom: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>this is buyer</h1>
+    <div class="sidebar">
+        <h2 class="text-white">Buyer Panel</h2>
+        <a href="#" class="active">Dashboard</a>
+        <a href="products.html">Browse Products</a>
+        <a href="cart.html">My Cart</a>
+        <a href="#" id="logoutLink">Logout</a>
+    </div>
+
+    <div class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 id="welcomeMessage">Welcome back, Buyer!</h1>
+                        <p class="lead">Happy shopping! Here's what's new in our store.</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="quick-actions">
+                            <a href="products.html" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Browse Products
+                            </a>
+                            <a href="cart.html" class="btn btn-outline-primary">
+                                <i class="bi bi-cart"></i> View Cart
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Features -->
+            <div class="row">
+                <!-- Browse Products Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <h3>Browse Products</h3>
+                            <p>Explore our wide range of products and find what you need.</p>
+                            <a href="products.html" class="btn btn-primary">Go to Products</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Details Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="bi bi-info-circle"></i>
+                            </div>
+                            <h3>Product Details</h3>
+                            <p>View detailed information about any product in our store.</p>
+                            <a href="products.html" class="btn btn-primary">View Products</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shopping Cart Card -->
+                <div class="col-md-4 mb-4">
+                    <div class="card dashboard-card h-100">
+                        <div class="card-body text-center">
+                            <div class="feature-icon">
+                                <i class="bi bi-cart"></i>
+                            </div>
+                            <h3>My Shopping Cart</h3>
+                            <p>Manage your cart items and proceed to checkout.</p>
+                            <a href="cart.html" class="btn btn-primary">View Cart</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Products Section -->
+            <div class="recent-products">
+                <h2 class="mb-4">Featured Products</h2>
+                <div class="row" id="featuredProducts">
+                    <!-- Featured products will be loaded here -->
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.0/font/bootstrap-icons.css">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = 'http://localhost:7252/api';
+            const authToken = localStorage.getItem('authToken');
+
+            if (!authToken) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Load user data and featured products
+            loadUserData();
+            loadFeaturedProducts();
+
+            // Logout functionality
+            $('#logoutLink').click(function(e) {
+                e.preventDefault();
+                localStorage.removeItem('authToken');
+                window.location.href = 'login.html';
+            });
+
+            function loadUserData() {
+                // Extract user info from JWT token
+                try {
+                    const payload = JSON.parse(atob(authToken.split('.')[1]));
+                    $('#welcomeMessage').text(`Welcome back, ${payload.unique_name || 'Buyer'}!`);
+                } catch (e) {
+                    console.error('Error parsing JWT token:', e);
+                }
+            }
+
+            function loadFeaturedProducts() {
+                $.ajax({
+                    url: `${apiBaseUrl}/products/List`,
+                    type: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    success: function(response) {
+                        displayFeaturedProducts(response.data.slice(0, 3)); // Show first 3 products
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading products:', xhr);
+                        $('#featuredProducts').html(`
+                            <div class="col-12 text-center py-5">
+                                <div class="alert alert-danger">Failed to load featured products</div>
+                            </div>
+                        `);
+                    }
+                });
+            }
+
+            function displayFeaturedProducts(products) {
+                const featuredContainer = $('#featuredProducts');
+                featuredContainer.empty();
+
+                if (products.length === 0) {
+                    featuredContainer.html(`
+                        <div class="col-12 text-center py-5">
+                            <div class="alert alert-info">No featured products available</div>
+                        </div>
+                    `);
+                    return;
+                }
+
+                products.forEach(product => {
+                    featuredContainer.append(`
+                        <div class="col-md-4 product-card">
+                            <div class="card h-100">
+                                <img src="${product.productImages && product.productImages.length > 0 ?
+                                    product.productImages[0].imageUrl : 'https://via.placeholder.com/300'}"
+                                    class="card-img-top" alt="${product.productName}" style="height: 200px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title">${product.productName}</h5>
+                                    <p class="card-text">${product.description ?
+                                        product.description.substring(0, 60) + '...' : 'No description available'}</p>
+                                    <p class="text-success fw-bold">$${product.price.toFixed(2)}</p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <a href="product-detail.html?id=${product.productId}" class="btn btn-outline-primary">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
